@@ -1,0 +1,29 @@
+{
+	"schemaVersion": 1,
+	"name": "hdata",
+	"shape": "monorepo",
+	"scope": "@hdata",
+	"generator": {
+		"cli": "0.8.0"
+	},
+	"apps": [],
+	"packages": [
+		{
+			"name": "config",
+			"block": "config",
+			"path": "packages/config"
+		}
+	],
+	"blocks": [
+		{
+			"id": "ci",
+			"target": "project"
+		}
+	],
+	"ai": {
+		"level": "standard",
+		"agents": ["claude-code", "codex", "copilot"],
+		"skills": ["elyvan-cli", "monorepo", "project-conventions"],
+		"prompts": ["adr", "framing", "plan", "pr", "readiness", "spec"]
+	}
+}
