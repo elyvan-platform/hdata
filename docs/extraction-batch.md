@@ -90,3 +90,29 @@ nos testes, sem apresentar resultados sintéticos como acervo histórico.
 Falta obter o inventário nominal, imagens/exportações e evidência de direitos para
 executar o lote real e medir qualidade; não é uma escolha de produto sem predefinição.
 `develop` e remotos ausentes neste clone; implementação parte de main local.
+
+## Descobrir e pôr páginas de um livro Digitarq na fila
+
+Depois de carregar o catálogo e aplicar as migrações, executar no ambiente da
+API, com a mesma DATABASE_URL. O primeiro comando lista páginas de um livro
+com as ligações oficiais e não chama o modelo. O segundo cria trabalhos para
+o worker ativo, até 20 páginas por chamada. O primeiro número é o offset
+(de base zero); o segundo é o limite. Começar com um lote pequeno.
+
+```sh
+pnpm --filter @hdata/api extraction:book PT/ADPRT/PRQ/PAMT38/003/0001 0 5
+pnpm --filter @hdata/api extraction:book PT/ADPRT/PRQ/PAMT38/003/0001 0 5 --apply
+```
+
+Antes de aplicar, confirmar que as condições do livro e das imagens autorizam
+o processamento externo e que a fonte Digitarq associada tem a decisão
+editorial apropriada (`source.rights_status = 'authorized'`). Usar o modo
+de pré-visualização se ainda não houver essa decisão. O worker, ativado com
+`OPENROUTER_API_KEY`, converte TIFF para JPEG quando necessário. O modo
+`--apply` enfileira processamento pago; repetir a mesma página com o mesmo
+modelo e versão reutiliza a execução.
+
+Com um token editorial com permissão de edição, abrir `/revisao/propostas`.
+É possível procurar no texto das propostas, abrir a imagem original e aceitar
+uma proposta como rascunho ou rejeitá-la. A validação e publicação continuam
+a usar a revisão editorial existente.

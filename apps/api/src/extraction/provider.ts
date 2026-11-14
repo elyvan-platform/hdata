@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { illegibleMarker } from "@hdata/domain";
+import sharp from "sharp";
 import { z } from "zod";
 
 export type LoadedImage = { bytes: Uint8Array; mediaType: string; sha256: string };
@@ -57,13 +58,39 @@ export function createUrlImageLoader(options: { timeoutMs: number; fetch?: typeo
 					: PermanentExtractionError;
 			throw new make("image_fetch_failed", `Image request answered ${response.status}`);
 		}
-		const mediaType = response.headers.get("content-type")?.split(";")[0]?.trim() ?? "";
-		if (!["image/jpeg", "image/png", "image/webp"].includes(mediaType))
+		let mediaType = response.headers.get("content-type")?.split(";")[0]?.trim() ?? "";
+		if (!["image/jpeg", "image/png", "image/webp", "image/tiff"].includes(mediaType))
 			throw new PermanentExtractionError("image_type", `Unsupported media type "${mediaType}"`);
-		const bytes = new Uint8Array(await response.arrayBuffer());
+		const reader = response.body?.getReader();
+		if (!reader) throw new PermanentExtractionError("image_size", "Image response is empty");
+		const chunks: Uint8Array[] = [];
+		let length = 0;
+		for (;;) {
+			const chunk = await reader.read();
+			if (chunk.done) break;
+			length += chunk.value.length;
+			if (length > maxImageBytes) {
+				await reader.cancel();
+				throw new PermanentExtractionError("image_size", "Image exceeds the download limit");
+			}
+			chunks.push(chunk.value);
+		}
+		let bytes = Buffer.concat(chunks);
+		const sha256 = createHash("sha256").update(bytes).digest("hex");
 		if (bytes.length === 0 || bytes.length > maxImageBytes)
 			throw new PermanentExtractionError("image_size", `Image size ${bytes.length} is not allowed`);
-		return { bytes, mediaType, sha256: createHash("sha256").update(bytes).digest("hex") };
+		if (mediaType === "image/tiff") {
+			try {
+				bytes = await sharp(bytes, { limitInputPixels: 60_000_000 })
+					.resize({ width: 3200, height: 3200, fit: "inside", withoutEnlargement: true })
+					.jpeg({ quality: 90 })
+					.toBuffer();
+				mediaType = "image/jpeg";
+			} catch {
+				throw new PermanentExtractionError("image_type", "TIFF could not be converted to JPEG");
+			}
+		}
+		return { bytes, mediaType, sha256 };
 	};
 	return loader;
 }
