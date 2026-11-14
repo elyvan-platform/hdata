@@ -38,7 +38,7 @@ de executar. Nunca presumir que um bloco gera todo o comportamento de domínio.
 | 5 — Imagens e armazenamento | Pending | — | Depende de 3; material real depende de direitos em 4 |
 | 6 — Gestão editorial e revisão | Pending | — | Depende de 1 e 3; usa fixtures enquanto 4/5 não disponíveis |
 | 7 — Pesquisa e consulta | In progress | — | Pesquisa de assentos publicados, API, cliente e frontend (`/`, `/catalogo`, `/assento/[id]`) entregues; ver `../search.md` e o log de #80. Faltam ADR da estratégia, decisão de acesso privado/público, Playwright e dados reais |
-| 8 — Publicação, operação e entrega | Pending | — | Depende de 7 e decisão de acesso; direitos apenas para material real |
+| 8 — Publicação, operação e entrega | Blocked | — | Tarefa 13: sem acesso/configuração Railway verificável, release de develop ou validação de #83; ver diagnóstico abaixo. Nenhum serviço publicado nesta execução |
 
 Estados: `Pending`, `Next`, `In progress`, `Done`, `Blocked`. Cada fase só passa a
 `Done` após validar os critérios. Em futuras entregas registar o hash do commit
@@ -159,6 +159,84 @@ próximo passo e log. Só marcar o plano `Done` quando todas as fases terminarem
   `/health`, `/ready`, `/version`, ensaio de restauro em ambiente isolado e revisão
   da documentação de operação. Não publicar automaticamente.
 
+## Tarefa 13 — Diagnóstico de deploy (2026-11-14)
+
+**Não concluída.** Nenhum deploy, migração de produção, importação real ou alteração
+de variáveis foi executado. A instrução desta execução proíbe publicar. O estado
+Draft do plano global não representa aprovação de lançamento.
+
+### Evidência e lacunas concretas
+
+- Commit de código inspecionado: `43a8c21c4af2cb99aa584fd3cf4d8f75fb6d1541`.
+  Só existe `main` local, sem remotos ou `develop`. Não é possível verificar a
+  integração das tarefas 10–12, a aprovação de #83 ou a estratégia de release em
+  develop. A CI existente valida check/typecheck/test em main/develop; não publica.
+- URL HTTPS, projeto, ambiente e IDs dos serviços Railway: **não disponíveis**.
+  CLI `railway` ausente; nenhum nome de variável `RAILWAY_*` no ambiente. Isto
+  não prova a inexistência de um projeto remoto: falta acesso ao projeto existente
+  para o inventariar, sem criar um substituto.
+- `elyvan.json` declara CI e database, sem docker/railway. Não foram encontrados
+  Dockerfiles, configuração Railway ou runbook de release neste clone. Skill
+  `elyvan-cli` consultada; CLI ausente e `pnpm dlx elyvan@0.8.0 --help` falhou
+  com HTTP 404 no registry. Após disponibilizar o CLI correto, verificar
+  `elyvan list blocks --json` e os dry-runs de `elyvan add docker --app <app>` e
+  `elyvan add railway --app <app>` para web/api; aplicar apenas o que faltar após
+  comparar com develop e com os serviços existentes. Nenhum scaffold foi inventado.
+- Variáveis a conferir **no Railway**, cujos valores não foram consultados:
+  API `NODE_ENV=production`, `HOST`, `PORT`, `DATABASE_URL`, `COMMIT_SHA`;
+  web `API_URL` e `COMMIT_SHA`. Nunca usar o default localhost de DATABASE_URL/API_URL
+  em produção. Configurar segredos apenas nas variáveis do serviço.
+  Para refresh/importação do catálogo: `DIGITARQ_CATALOG_URL` com contrato JSON
+  verificado e `CATALOG_REFRESH_TOKEN`; para revisão: `EDITORIAL_ACTORS`.
+  Confirmar política de acesso antes de expor a consulta sem sessão existente.
+- O worker de extração existente arranca dentro da API apenas com
+  `ANTHROPIC_API_KEY`; usa também `EXTRACTION_MODEL`, limites e timeouts do schema.
+  Não há evidência de que o MVP aprovado exija outro serviço worker. Não ativar
+  processamento pago ou duplicar consumidores sem âmbito, direitos e orçamento.
+- Existem migrações Drizzle `0000`–`0007`, mas não há PostgreSQL de produção
+  acessível nem ferramentas locais `psql`/Docker. Não há evidência de backup R2,
+  chave de recuperação, retenção aplicada ou restauro ensaiado.
+- Cobertura publicada: **não medida**, não zero presumido. Inventário e lotes
+  existentes não demonstram quatro tipologias reais pesquisáveis. O contrato
+  atual aceita baptism/marriage/death/undetermined; `undetermined` não comprova
+  outra tipologia. Pesquisa de manuscritos e decisão da estratégia continuam
+  pendentes conforme `../search.md` e o log da tarefa 12.
+
+### Retoma e critérios de fecho
+
+Próximo passo da tarefa 13: disponibilizar o clone/remoto develop e o acesso ao
+projeto Railway existente, confirmar #83, política aprovada e autorização de
+publicação. Depois executar a release documentada, conservando estes critérios:
+
+- [ ] Registar projeto/ambiente/serviços, URL HTTPS e commit de release em ambos
+  os `/version`; verificar configuração e acesso aprovado antes da exposição.
+- [ ] Ensaiar backup encriptado e restauro numa base isolada, verificar contagens
+  e revisões, guardar evidência sem credenciais; confirmar retenção
+  7 diários/4 semanais/6 mensais e teste mensal.
+- [ ] Suspender importadores/consumidores durante a janela de migração;
+  executar `pnpm --filter @hdata/api db:migrate` uma vez com DATABASE_URL do alvo
+  controlado e registar migrações aplicadas. Não executar contra o default local.
+- [ ] Ensaiar `pnpm --filter @hdata/api index:import` com entrada e mapping
+  autorizados, primeiro preview, depois `--database` e só então `--apply`.
+  Usar um ficheiro de relatório novo em cada execução. Repetir e comparar
+  contagens/revisões para provar idempotência e preservação editorial; não usar
+  fixtures como acervo de produção. Ver `../sources/historical-index.md`
+  e o código `apps/api/src/archive/import-index-cli.ts` para o contrato vigente.
+- [ ] No URL publicado testar `/health`, `/ready`, `/version` de web e API;
+  a readiness web só verifica ambiente, por isso exigir também a readiness API.
+  Testar nomes conhecidos, filtros, excertos e abertura da fonte em batismos,
+  casamentos, óbitos e outra tipologia efetivamente suportada. Guardar consultas,
+  IDs/fontes, resultados esperados/observados, cobertura e data.
+- [ ] A partir do Railway testar importação e timeout/falha Digitarq em ambiente
+  isolado; confirmar erro explícito e preservação do catálogo/revisões anteriores.
+- [ ] Registar release anterior e ensaiar rollback: suspender escritas e workers,
+  voltar ao commit anterior apenas se compatível com o schema. Em caso contrário,
+  restaurar o backup verificado numa base separada, reconciliar escritas posteriores
+  e trocar a ligação controladamente. Nunca apagar revisões nem presumir que
+  reverter a imagem reverte migrações. Repetir smoke e pesquisa após rollback.
+
+Sem estes resultados não fechar a tarefa nem assinalar a fase 8 como Done.
+
 ## Risks
 
 Fontes indisponíveis são tratadas na fase 4 em paralelo, não como dependência de
@@ -175,6 +253,21 @@ publicação externa e alterações à configuração gerada apenas para documen
 
 ## Log
 
+- 2026-11-14 — Tarefa 13: análise separada da alteração documental, sem troca de
+  modelo disponível. Não retomados os planos de produto pausados, conforme pedido
+  de executar esta tarefa sem perguntas. Diagnóstico e critérios de retoma acima;
+  fase 8 Blocked, tarefa não fechada, sem publicação nem segredos alterados.
+  `pnpm install --frozen-lockfile`, `pnpm check`, `pnpm typecheck`, `pnpm test`
+  e `pnpm build`: todos exit 0. Comandos executados no runtime fornecido
+  Node v22.23.3 / pnpm 12.14.0; Node 24 exigido pelo projeto não validado.
+  `pnpm --filter @hdata/web start` e `pnpm --filter @hdata/api start` iniciaram os
+  builds locais. `curl --max-time 8` em localhost:3000: health/ready/version HTTP 200;
+  localhost:3001: health/version HTTP 200, ready HTTP 503 com database down
+  (sem PostgreSQL disponível). COMMIT_SHA não configurado neste smoke; não se
+  apresenta este resultado como verificação de release identificável.
+  Não validados: URL publicado, acesso Railway, migrações em PostgreSQL real,
+  backup/restauro, importação do acervo e pesquisa das quatro tipologias reais,
+  falha Digitarq a partir do Railway ou rollback executado.
 - 2026-11-13 — Análise e entrega documental concluídas pelos templates locais;
   CLI ausente e fontes externas não verificadas. Sem troca de modelo disponível;
   análise separada da redação. Base disponível: main local sem remoto, não develop.
