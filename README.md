@@ -54,3 +54,5 @@ project does not depend on the generator to install, build or run.
 
 Preparação do lançamento do arquivo: [runbook operacional](docs/operations/release.md)
 e [readiness](docs/readiness/2026-11-14-lancamento-arquivo.md).
+
+Catálogo sem dados: [variáveis de ambiente e criação passo a passo](docs/sources/digitarq.md#criar-o-catálogo-passo-a-passo).
