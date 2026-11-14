@@ -36,6 +36,13 @@
       "when": 1794617244346,
       "tag": "0004_editorial_review",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794617730130,
+      "tag": "0005_extraction",
+      "breakpoints": true
     }
   ]
 }

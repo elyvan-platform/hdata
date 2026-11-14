@@ -22,3 +22,9 @@ separados dos assentos. Fonte/ID externo/hash garantem reimportação idempotent
 variantes coexistem para revisão sem apagar TIF ou campos originais. Proveniência,
 confiança e espécie (índice/transcrição) acompanham cada snapshot. Ver
 [comando, mapeamentos e limitações](sources/historical-index.md).
+
+## Propostas de extração
+
+`extraction_run` (imagem, fonte, modelo, versão, prompt, tentativas, erro) e `extraction_proposal`
+(assento proposto, região, confiança estimada, estado de revisão) ficam separadas dos assentos: só a
+aceitação humana cria uma revisão `draft`. Ver [piloto de extração](extraction-pilot.md).

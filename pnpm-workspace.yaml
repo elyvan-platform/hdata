@@ -15,6 +15,7 @@ catalog:
   fastify: 5.12.8
   next: 16.4.6
   pg: 8.23.1
+  pg-boss: 12.38.2
   react: 19.3.1
   react-dom: 19.3.1
   turbo: 2.11.9

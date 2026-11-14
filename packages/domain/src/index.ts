@@ -23,6 +23,7 @@ export type VersionResponse = z.infer<typeof versionResponseSchema>;
 export * from "./archive.ts";
 export * from "./catalog.ts";
 export * from "./editorial.ts";
+export * from "./extraction.ts";
 export * from "./historical-index.ts";
 
 export * from "./search.ts";

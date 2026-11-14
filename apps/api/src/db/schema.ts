@@ -1,11 +1,13 @@
 import { recordTypes, validationStatuses } from "@hdata/domain";
 import { sql } from "drizzle-orm";
 import {
+	boolean,
 	check,
 	integer,
 	jsonb,
 	pgEnum,
 	pgTable,
+	real,
 	text,
 	timestamp,
 	unique,
@@ -266,5 +268,67 @@ export const revisionEvents = pgTable(
 			sql`${t.action} in ('created','edited','merged','submit','validate','reject','publish')`,
 		),
 		check("revision_event_actor", sql`length(${t.actorId}) > 0`),
+	],
+);
+
+/** One model run over one image; the idempotency key is image + model + version + prompt. */
+export const extractionRuns = pgTable(
+	"extraction_run",
+	{
+		id: id(),
+		idempotencyKey: text("idempotency_key").notNull(),
+		imageId: uuid("image_id")
+			.notNull()
+			.references(() => images.id),
+		sourceId: uuid("source_id")
+			.notNull()
+			.references(() => sources.id),
+		model: text("model").notNull(),
+		modelVersion: text("model_version").notNull(),
+		promptVersion: text("prompt_version").notNull(),
+		status: text("status").notNull().default("queued"),
+		attempts: integer("attempts").notNull().default(0),
+		maxAttempts: integer("max_attempts").notNull(),
+		imageSha256: text("image_sha256"),
+		errorCode: text("error_code"),
+		errorMessage: text("error_message"),
+		createdAt: createdAt(),
+		finishedAt: timestamp("finished_at", { withTimezone: true }),
+	},
+	(t) => [
+		unique("extraction_run_key_unique").on(t.idempotencyKey),
+		check("extraction_run_status", sql`${t.status} in ('queued','running','succeeded','failed')`),
+		check("extraction_run_attempts", sql`${t.attempts} >= 0 and ${t.attempts} <= ${t.maxAttempts}`),
+	],
+);
+
+/** A seat proposed by a run. Never a record: only a human accepting it creates a draft revision. */
+export const extractionProposals = pgTable(
+	"extraction_proposal",
+	{
+		id: id(),
+		runId: uuid("run_id")
+			.notNull()
+			.references(() => extractionRuns.id),
+		ordinal: integer("ordinal").notNull(),
+		region: jsonb("region"),
+		content: jsonb("content").notNull(),
+		confidence: real("confidence").notNull(),
+		confidenceKind: text("confidence_kind").notNull().default("estimate"),
+		hasIllegible: boolean("has_illegible").notNull(),
+		reviewStatus: text("review_status").notNull().default("pending"),
+		reviewedBy: text("reviewed_by"),
+		reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+		revisionId: uuid("revision_id").references(() => revisions.id),
+		createdAt: createdAt(),
+	},
+	(t) => [
+		unique("extraction_proposal_ordinal_unique").on(t.runId, t.ordinal),
+		check("extraction_proposal_confidence", sql`${t.confidence} between 0 and 1`),
+		check("extraction_proposal_kind", sql`${t.confidenceKind} in ('estimate')`),
+		check(
+			"extraction_proposal_review",
+			sql`${t.reviewStatus} in ('pending','accepted','rejected')`,
+		),
 	],
 );

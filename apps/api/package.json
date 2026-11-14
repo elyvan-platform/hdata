@@ -13,13 +13,15 @@
 		"test": "vitest run",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
-		"index:import": "node --experimental-strip-types src/archive/import-index-cli.ts"
+		"index:import": "node --experimental-strip-types src/archive/import-index-cli.ts",
+		"extraction:enqueue": "node --env-file-if-exists=.env src/extraction/enqueue-cli.ts"
 	},
 	"dependencies": {
 		"@hdata/domain": "workspace:*",
 		"drizzle-orm": "catalog:",
 		"fastify": "catalog:",
 		"pg": "catalog:",
+		"pg-boss": "catalog:",
 		"zod": "catalog:",
 		"exceljs": "catalog:"
 	},
