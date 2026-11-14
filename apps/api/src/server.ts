@@ -1,6 +1,7 @@
 import { buildApp } from "./app.ts";
 import { createCatalogService } from "./catalog/refresh-catalog.ts";
 import { createDatabase } from "./db/client.ts";
+import { createTokenAuthenticator, parseEditorialActors } from "./editorial/authenticator.ts";
 import { parseEnv } from "./env/index.ts";
 
 const env = parseEnv(process.env);
@@ -11,7 +12,13 @@ const catalog = createCatalogService({
 	fondsReference: env.DIGITARQ_FONDS_REFERENCE,
 	timeoutMs: env.DIGITARQ_TIMEOUT_MS,
 });
-const app = buildApp({ env, database, catalog });
+const editorial = env.EDITORIAL_ACTORS
+	? {
+			pool,
+			authenticate: createTokenAuthenticator(parseEditorialActors(env.EDITORIAL_ACTORS)),
+		}
+	: undefined;
+const app = buildApp({ env, database, catalog, ...(editorial && { editorial }) });
 
 try {
 	await app.listen({ host: env.HOST, port: env.PORT });

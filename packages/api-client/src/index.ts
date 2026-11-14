@@ -5,26 +5,45 @@ import {
 	catalogErrorResponseSchema,
 	catalogRefreshResponseSchema,
 	catalogResponseSchema,
+	type EditorialDecision,
+	type EditorialError,
+	type EditRevisionRequest,
+	editorialErrorSchema,
+	type Fiche,
+	ficheSchema,
 	type HealthResponse,
 	healthResponseSchema,
 	type ReadyResponse,
+	type ReviewQueueResponse,
+	type RevisionView,
 	readyResponseSchema,
+	reviewQueueResponseSchema,
+	revisionViewSchema,
 	type VersionResponse,
 	versionResponseSchema,
 } from "@hdata/domain";
-import type { ZodType } from "zod";
+import { type ZodType, z } from "zod";
 
 export class ApiError extends Error {
 	readonly status: number;
 	/** Present when the API answered a catalog refresh failure with its typed payload. */
 	readonly catalogError: CatalogErrorResponse | undefined;
 
-	constructor(message: string, status: number, catalogError?: CatalogErrorResponse) {
+	constructor(
+		message: string,
+		status: number,
+		catalogError?: CatalogErrorResponse,
+		editorialError?: EditorialError,
+	) {
 		super(message);
+		this.editorialError = editorialError;
 		this.name = "ApiError";
 		this.status = status;
 		this.catalogError = catalogError;
 	}
+
+	/** Present when the API answered an editorial request with its typed error (e.g. a conflict). */
+	readonly editorialError: EditorialError | undefined;
 
 	/** 401/403: the caller is not authenticated or not allowed. */
 	get isAuthError(): boolean {
@@ -75,6 +94,59 @@ export function createApiClient(options: ApiClientOptions) {
 				);
 			}
 			return catalogRefreshResponseSchema.parse(body);
+		},
+		/** Editorial review; every call is made with the caller's own bearer token. */
+		review(token: string) {
+			async function call<T>(
+				method: "GET" | "POST",
+				path: string,
+				schema: ZodType<T>,
+				body?: unknown,
+			): Promise<T> {
+				const response = await doFetch(`${base}${path}`, {
+					method,
+					headers: {
+						accept: "application/json",
+						authorization: `Bearer ${token}`,
+						...(body === undefined ? {} : { "content-type": "application/json" }),
+					},
+					...(body === undefined ? {} : { body: JSON.stringify(body) }),
+				});
+				const payload: unknown = await response.json().catch(() => undefined);
+				if (!response.ok) {
+					const typed = editorialErrorSchema.safeParse(payload);
+					throw new ApiError(
+						`${method} ${path} failed with status ${response.status}`,
+						response.status,
+						undefined,
+						typed.success ? typed.data : undefined,
+					);
+				}
+				return schema.parse(payload);
+			}
+			return {
+				queue: (): Promise<ReviewQueueResponse> =>
+					call("GET", "/review/queue", reviewQueueResponseSchema),
+				fiche: (recordId: string): Promise<Fiche> =>
+					call("GET", `/review/records/${recordId}`, ficheSchema),
+				async edit(
+					recordId: string,
+					request: EditRevisionRequest,
+				): Promise<{ revision: RevisionView; merged: boolean }> {
+					return call(
+						"POST",
+						`/review/records/${recordId}/revisions`,
+						z.object({ revision: revisionViewSchema, merged: z.boolean() }),
+						request,
+					);
+				},
+				decide: (
+					recordId: string,
+					decision: EditorialDecision,
+					body: { revisionId: string; note?: string },
+				): Promise<RevisionView> =>
+					call("POST", `/review/records/${recordId}/${decision}`, revisionViewSchema, body),
+			};
 		},
 		version: (): Promise<VersionResponse> => request("/version", versionResponseSchema),
 	};

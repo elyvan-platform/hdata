@@ -29,6 +29,13 @@
       "when": 1794616245703,
       "tag": "0003_free_jack_murdock",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794617244346,
+      "tag": "0004_editorial_review",
+      "breakpoints": true
     }
   ]
 }

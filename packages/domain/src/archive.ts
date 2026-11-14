@@ -1,7 +1,13 @@
 import { z } from "zod";
 
 export const recordTypes = ["baptism", "marriage", "death", "undetermined"] as const;
-export const validationStatuses = ["draft", "in_review", "validated", "rejected"] as const;
+export const validationStatuses = [
+	"draft",
+	"in_review",
+	"validated",
+	"rejected",
+	"published",
+] as const;
 export const recordTypeSchema = z.enum(recordTypes);
 export const validationStatusSchema = z.enum(validationStatuses);
 export const partialDateSchema = z

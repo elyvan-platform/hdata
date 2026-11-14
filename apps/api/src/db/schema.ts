@@ -240,3 +240,31 @@ export const historicalEntries = pgTable(
 	},
 	(t) => [unique("historical_entry_hash_unique").on(t.sourceId, t.externalId, t.contentHash)],
 );
+
+/** Append-only audit trail of every editorial change: who, when, from which status to which. */
+export const revisionEvents = pgTable(
+	"revision_event",
+	{
+		id: id(),
+		recordId: uuid("record_id")
+			.notNull()
+			.references(() => records.id),
+		revisionId: uuid("revision_id")
+			.notNull()
+			.references(() => revisions.id),
+		action: text("action").notNull(),
+		actorId: text("actor_id").notNull(),
+		actorRole: text("actor_role").notNull(),
+		fromStatus: validationStatus("from_status"),
+		toStatus: validationStatus("to_status").notNull(),
+		note: text("note"),
+		createdAt: createdAt(),
+	},
+	(t) => [
+		check(
+			"revision_event_action",
+			sql`${t.action} in ('created','edited','merged','submit','validate','reject','publish')`,
+		),
+		check("revision_event_actor", sql`length(${t.actorId}) > 0`),
+	],
+);

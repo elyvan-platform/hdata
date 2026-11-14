@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { recordImportSchema } from "@hdata/domain";
 import type { Pool } from "pg";
 
-function canonical(value: unknown): string {
+export function canonical(value: unknown): string {
 	if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
 	if (value !== null && typeof value === "object")
 		return `{${Object.entries(value)

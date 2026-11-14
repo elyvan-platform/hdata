@@ -40,6 +40,13 @@ export const envSchema = z.object({
 		.min(16)
 		.optional()
 		.describe("Bearer token that authorizes POST /catalog/refresh (optional; unset disables it)"),
+	EDITORIAL_ACTORS: z
+		.string()
+		.min(2)
+		.optional()
+		.describe(
+			'JSON array of {"token","id","role"} editorial actors; role is editor, reviewer, publisher or admin (optional; unset disables /review)',
+		),
 	COMMIT_SHA: z.string().min(1).optional().describe("Commit reported by /version (optional)"),
 });
 
