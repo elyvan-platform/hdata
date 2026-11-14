@@ -34,7 +34,7 @@ de executar. Nunca presumir que um bloco gera todo o comportamento de domínio.
 | 1 — Contratos e fixtures | Next | — | Depende de aprovação de 0 |
 | 2 — API e persistência | Pending | — | Depende de 1 |
 | 3 — Autenticação, autorização e auditoria | Pending | — | Depende de 2 |
-| 4 — Aquisição e importação de fontes | Pending | — | Inventário pode começar após 0; importador depende de 2 e 3 |
+| 4 — Aquisição e importação de fontes | In progress | — | Inventário parcial em `docs/sources/vila-caiz-inventario.md` (sem fontes primárias acedidas; 39/27/22 livros por reconciliar); importador depende de 2 e 3 |
 | 5 — Imagens e armazenamento | Pending | — | Depende de 3; material real depende de direitos em 4 |
 | 6 — Gestão editorial e revisão | Pending | — | Depende de 1 e 3; usa fixtures enquanto 4/5 não disponíveis |
 | 7 — Pesquisa e consulta | Pending | — | Depende de 6; integra 4/5 quando disponíveis |
@@ -179,6 +179,15 @@ publicação externa e alterações à configuração gerada apenas para documen
   CLI ausente e fontes externas não verificadas. Sem troca de modelo disponível;
   análise separada da redação. Base disponível: main local sem remoto, não develop.
   Produto permanece Draft; próxima ação: revisão/aprovação, depois fase 1.
+- 2026-11-14 — Inventário de fontes de Vila Caiz (tarefa 10), a partir do fundo PT/ADPRT/PRQ/PAMT38.
+  Feito: `docs/sources/vila-caiz-inventario.md` e `.csv` com termos, fontes, tipologias, homónimos,
+  bloqueios e lacunas. Evidência apenas de trechos de pesquisa web: Digitarq, ADPRT e tombo.pt não
+  acedidos (CONNECT 403 no ambiente). Fundo: 27 volumes (ADPRT via pesquisa); tombo.pt por contagem
+  de linhas 8+9+5=22; a base da tarefa diz 39. Divergência por resolver: falta a lista nominal de
+  unidades de instalação do Digitarq. Sem conteúdo de assentos lido. Pendente: reconciliar 39 livros,
+  ler condições de acesso/reutilização (ADPRT), verificar Repositório Histórico e registo civil.
+  Base: branch local `docs/inventario-fontes-vila-caiz` a partir de `main`; `develop` e a #79 não
+  existem neste clone. Próxima ação: abrir o Digitarq a partir de ambiente autorizado e atualizar o CSV.
 - 2026-11-13 — Validação: `pnpm install`, `pnpm check`, `pnpm typecheck`,
   `pnpm test` e `pnpm build` terminaram com código 0. Biome verificou 6 ficheiros;
   Turbo não executou tarefas nos quatro comandos (só existe `@hdata/config`).
