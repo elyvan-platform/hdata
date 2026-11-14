@@ -51,3 +51,6 @@ an invalid environment. Its `.env.example` is generated from that schema: after 
 
 `elyvan.json` records how this project was generated (shape, apps, packages and blocks). The
 project does not depend on the generator to install, build or run.
+
+Preparação do lançamento do arquivo: [runbook operacional](docs/operations/release.md)
+e [readiness](docs/readiness/2026-11-14-lancamento-arquivo.md).

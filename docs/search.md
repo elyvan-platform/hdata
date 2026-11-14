@@ -42,3 +42,19 @@ What the public consultation does today. Product rules: `specs/arquivo-historico
 against a PGlite database with one published seat: search from `/` with filters, seat page,
 source links, empty search and 404. A PostgreSQL server was not available, so that run used
 PGlite (PostgreSQL compiled to WASM), not a server instance.
+
+## Cobertura por fonte e limitações de lançamento
+
+Não há acervo real importado/publicado demonstrado pelos ficheiros locais; a
+contagem de uma implantação não foi medida. Não declarar zero numa base remota
+não consultada. Os testes usam pessoas e URLs sintéticas. Ver o
+[inventário](sources/vila-caiz-inventario.md) e os [índices](sources/historical-index.md):
+39/27/22 livros por reconciliar; 484 batismos/254 casamentos não recuperados;
+nenhuma transcrição real de óbitos validada. Não há percentagem mensurável.
+
+Índices secundários em staging não são assentos pesquisáveis nem prova de validação.
+`undetermined` significa tipologia desconhecida, não demonstra uma quarta série.
+A pesquisa usa prefixos de palavras e comparação em memória; não pesquisa texto
+manuscrito nem identifica pessoas com certeza. O modo privado/investigador ainda
+não existe. Estas lacunas impedem considerar cumprida a predefinição privada da spec.
+Preparação operacional e ensaios reais: [runbook](operations/release.md).

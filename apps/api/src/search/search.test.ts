@@ -6,7 +6,9 @@ import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildApp } from "../app.ts";
 import { importRecord } from "../archive/import-record.ts";
-import { decide } from "../editorial/service.ts";
+import { importIndex } from "../archive/store-index.ts";
+import { createCatalogService } from "../catalog/refresh-catalog.ts";
+import { decide, editRevision, getFiche } from "../editorial/service.ts";
 import type { Actor } from "../editorial/types.ts";
 import { parseEnv } from "../env/index.ts";
 
@@ -174,5 +176,157 @@ describe("search", () => {
 			{ referenceCode: "PT/2", title: "Livro PT/2", publishedRecords: 1 },
 			{ referenceCode: "PT/3", title: "Livro PT/3", publishedRecords: 0 },
 		]);
+	});
+});
+
+// Release acceptance uses invented people and example.org URLs, never historical evidence.
+describe("release acceptance (synthetic)", () => {
+	it("opens baptism and marriage with their source and participant roles", async () => {
+		const baptism = await search("?type=baptism&q=joao");
+		expect(baptism.results[0]).toMatchObject({
+			recordId: records["João Álvares"],
+			locator: "f. 1",
+			origin: { sourceKind: "index" },
+			book: {
+				referenceCode: "PT/1",
+				recordUrl: "https://example.org/r",
+				viewerUrl: "https://example.org/v",
+			},
+		});
+		const marriage = await importRecord(pool, {
+			sourceId,
+			bookId: books["PT/2"],
+			externalId: "synthetic-marriage",
+			revision: {
+				recordType: "marriage",
+				provenance: { sourceId, method: "import" },
+				participants: [
+					{ role: "groom", nameAsWritten: "Noivo Sintético", position: 0 },
+					{ role: "bride", nameAsWritten: "Noiva Sintética", position: 1 },
+				],
+			},
+		});
+		for (const [actor, action] of [
+			[editor, "submit"],
+			[reviewer, "validate"],
+			[publisher, "publish"],
+		] as const)
+			await decide(pool, actor, marriage.recordId, action, { revisionId: marriage.revisionId });
+		const found = await search("?type=marriage&q=sintetico");
+		expect(found.results[0]?.participants.map((p) => p.role)).toEqual(["groom", "bride"]);
+		expect((await search("?type=marriage&q=sintetico&from=1800&to=2000")).total).toBe(0);
+	});
+
+	it("keeps death books without indexed seats visible and separates a secondary index from publication", async () => {
+		expect(await search("?type=death&book=PT/3")).toMatchObject({ total: 0, results: [] });
+		expect((await app.inject("/search/coverage")).json().books).toContainEqual({
+			referenceCode: "PT/3",
+			title: "Livro PT/3",
+			publishedRecords: 0,
+		});
+		const input = {
+			sourceId,
+			bookId: books["PT/3"],
+			externalId: "synthetic-death",
+			revision: {
+				recordType: "death",
+				date: { year: 1880, precision: "year" },
+				provenance: { sourceId, method: "import", locator: "f. 9" },
+				participants: [{ role: "deceased", nameAsWritten: "Pessoa Sintética", position: 0 }],
+			},
+		};
+		const ids = await importRecord(pool, input);
+		const rows = [
+			{ id: "synthetic-death", text: "Índice sintético", book: "PT/3", locator: "f. 9" },
+		];
+		const mapping = {
+			sourceId,
+			citation: "Synthetic release fixture",
+			reuseEvidence: "Invented data",
+			kind: "index",
+			recordType: "death",
+			columns: { externalId: "id", text: "text", bookReference: "book", locator: "locator" },
+		};
+		await importIndex(pool, rows, mapping, true);
+		expect((await search("?type=death")).total).toBe(0);
+		await decide(pool, editor, ids.recordId, "submit", { revisionId: ids.revisionId });
+		await decide(pool, reviewer, ids.recordId, "validate", { revisionId: ids.revisionId });
+		await decide(pool, publisher, ids.recordId, "publish", { revisionId: ids.revisionId });
+		expect((await getFiche(pool, reviewer, ids.recordId)).secondaryIndex).toHaveLength(1);
+		expect((await search("?type=death&book=PT/3&from=1870&to=1890")).total).toBe(1);
+		expect((await search("?type=death&book=PT/3&from=1890")).total).toBe(0);
+		const before = await search("?type=death");
+		expect(await importRecord(pool, input)).toEqual(ids);
+		expect((await importIndex(pool, rows, mapping, true)).unchanged).toHaveLength(1);
+		expect(await search("?type=death")).toEqual(before);
+		const fiche = await getFiche(pool, editor, ids.recordId);
+		const edited = await editRevision(pool, editor, ids.recordId, {
+			baseRevisionId: ids.revisionId,
+			content: { ...fiche.current.content, placeAsWritten: "Lugar Sintético" },
+		});
+		expect(edited.revision.status).toBe("draft");
+		expect((await search("?q=lugar&type=death")).total).toBe(0);
+		expect(await search("?type=death")).toEqual(before);
+		await decide(pool, editor, ids.recordId, "submit", { revisionId: edited.revision.id });
+		await decide(pool, reviewer, ids.recordId, "validate", { revisionId: edited.revision.id });
+		await decide(pool, publisher, ids.recordId, "publish", { revisionId: edited.revision.id });
+		expect((await search("?q=lugar&type=death")).results[0]?.place).toBe("Lugar Sintético");
+	});
+
+	it("preserves catalog identity and published search through reimport and Digitarq 5xx", async () => {
+		let down = false;
+		const fondsReference = "PT/SYNTHETIC";
+		const service = createCatalogService({
+			pool,
+			url: "https://example.org/catalog",
+			fondsReference,
+			timeoutMs: 500,
+			fetch: async () =>
+				new Response(
+					JSON.stringify(
+						down
+							? {}
+							: {
+									fondsReference,
+									title: "Synthetic",
+									expectedBookCount: 1,
+									books: [{ referenceCode: `${fondsReference}/1`, title: "Synthetic book" }],
+								},
+					),
+					{ status: down ? 503 : 200 },
+				),
+		});
+		const server = buildApp({
+			env: parseEnv({ NODE_ENV: "test", CATALOG_REFRESH_TOKEN: "synthetic-release-token" }),
+			database: { ping: async () => {}, close: async () => {} },
+			catalog: service,
+			search: { pool },
+		});
+		try {
+			const request = {
+				method: "POST",
+				url: "/catalog/refresh",
+				headers: { authorization: "Bearer synthetic-release-token" },
+			} as const;
+			expect((await server.inject(request)).statusCode).toBe(200);
+			const stored = (await db.query("SELECT id FROM book ORDER BY id")).rows;
+			const before = (await server.inject("/search")).json();
+			expect((await server.inject(request)).json().unchanged).toBe(true);
+			down = true;
+			expect((await server.inject(request)).statusCode).toBe(502);
+			const catalog = await server.inject("/catalog");
+			expect(catalog.statusCode).toBe(200);
+			expect(catalog.json().status.data).toBe("stored_copy");
+			expect((await db.query("SELECT id FROM book ORDER BY id")).rows).toEqual(stored);
+			expect((await server.inject("/search")).json()).toEqual(before);
+			const record = await server.inject(`/records/${records["João Álvares"]}`);
+			expect(record.statusCode).toBe(200);
+			expect(record.json()).toMatchObject({
+				book: { recordUrl: "https://example.org/r", viewerUrl: "https://example.org/v" },
+				images: [{ folio: "3", url: "https://example.org/i/1" }],
+			});
+		} finally {
+			await server.close();
+		}
 	});
 });

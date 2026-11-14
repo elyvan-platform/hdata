@@ -94,3 +94,10 @@ registar fontes e condições e preparar um mapping por formato observado. Execu
 pré-visualização, rever todas as diferenças/rejeições/conflitos/duplicados, comparar
 amostras e TIF com o original e só então aplicar. O teste 484/254 usa exclusivamente
 fixtures sintéticas; não demonstra a reconciliação dos dados históricos ausentes.
+
+## Readiness do lançamento (2026-11-14)
+
+Nenhum assento real desta fonte foi demonstrado nesta validação local; contagem
+publicada num serviço remoto não medida. Os totais 484/254 continuam referências
+não recuperadas. Reimportação e preservação de revisão publicada foram ensaiadas
+com fixtures sintéticas; ver [readiness](../readiness/2026-11-14-lancamento-arquivo.md).

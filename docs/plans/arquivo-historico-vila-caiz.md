@@ -1,8 +1,8 @@
 # Plan — Arquivo histórico Vila Caiz
 
-- **Status:** Draft
+- **Status:** Paused
 - **Resume prompt:** ask
-- **Next step:** Rever a spec e aprovar o âmbito e a predefinição privada; iniciar a fase 1 com fixtures sintéticas, mantendo a aquisição de fontes em paralelo.
+- **Next step:** Disponibilizar develop e CLI Elyvan; executar os bloqueios de lançamento e o ensaio autorizado descritos na tarefa 09.
 - **Date:** 2026-11-13
 - **Spec:** [Arquivo histórico Vila Caiz](../specs/arquivo-historico-vila-caiz.md)
 
@@ -320,3 +320,68 @@ publicação externa e alterações à configuração gerada apenas para documen
   consulta serve dados publicados sem sessão (a publicação exige validação e direitos
   conhecidos); o modo privado/investigador por âmbito continua por implementar. Antes de #83/#84:
   ADR da estratégia de pesquisa, Playwright e dados reais importados.
+
+## Tarefa 09 — Preparação de lançamento (2026-11-14)
+
+Âmbito aprovado nesta execução: testes sintéticos e documentação operacional;
+não retoma o piloto pausado. Base disponível: main local, sem develop/remoto;
+integração dos pré-requisitos não verificável pelo histórico de develop.
+Análise separada da implementação; troca de modelos indisponível.
+
+| Subfase | Estado | Critério de saída | Commit |
+|---|---|---|---|
+| 9a — Testes | Done | Gate e build passam; matriz abaixo revista | — |
+| 9b — Blocos | Blocked | CLI gera Docker/Railway/Sentry e imagens verificadas | — |
+| 9c — Runbook | Done | Ambiente, migração, backup/restauro e rollback documentados | — |
+| 9d — Readiness | Done | Decisão com evidência e limites explícitos | — |
+| 9e — Ambiente autorizado | Blocked | Deploy, PostgreSQL, fontes reais e restauro demonstrados | — |
+
+- [x] 9a: testes e quatro comandos de validação passam.
+- [ ] 9b: blocos gerados e imagens executadas.
+- [x] 9c: runbook revisto contra schemas e scripts reais.
+- [x] 9d: readiness regista cobertura observada e bloqueios.
+- [ ] 9e: percurso real pesquisa → assento → fonte, por tipologia, comprovado.
+
+Ficheiros: testes search/catalog/web; docs de operação, readiness, pesquisa e piloto.
+Abordagem: reutilizar PGlite, importIndex/importRecord, decide/editRevision e Fastify
+inject; sem alterar contratos, migrações ou testes existentes. Riscos: PGlite não
+valida concorrência PostgreSQL; fixtures não provam cobertura histórica; CLI ausente.
+Validação: pnpm check, pnpm typecheck, pnpm test, pnpm build e smoke local.
+Next step: obter CLI/develop e executar 9b/9e em ambiente autorizado. Subfases locais concluídas sem commit, conforme opção autorizada na tarefa.
+
+### Matriz de cobertura 09 (fixtures sintéticas)
+
+| Critério | Evidência automatizada | Limite |
+|---|---|---|
+| Batismo, casamento, papéis e origem | search.test.ts: opens baptism and marriage | Pessoas inventadas |
+| Óbitos com/sem assentos, índice separado, filtros | search.test.ts: keeps death books | PGlite; não mede acervo |
+| Links oficiais/imagens e indisponibilidade | search.test.ts: preserves catalog; web/source-links.test.ts | Renderização estática, sem abrir sites |
+| Falha Digitarq 5xx com catálogo guardado e pesquisa | search.test.ts: preserves catalog | Fetch simulado; timeout testado no adapter/catalog.test.ts |
+| Reimportação de índice, catálogo e assento publicado | search.test.ts: keeps death books / preserves catalog | Mesma fixture, sem exportações históricas |
+| Revisão até republicação, rascunho não altera pesquisa | search.test.ts: keeps death books | Não substitui ensaio editorial humano |
+| Papéis, 401/403, conflitos e histórico | editorial/editorial.test.ts existente | Separação por identidade multipapel não garantida |
+
+Sem alterações a test/acceptance, contratos, migrações ou configuração gerada.
+A cobertura de fontes está em ../search.md; a readiness e o runbook não fecham
+os critérios de implantação da fase 8.
+
+### Log da tarefa 09
+
+- 2026-11-14 — Análise/plano escritos antes da implementação; sem troca de
+  modelo disponível. Planos de piloto pausados não retomados por não integrarem
+  este lançamento. Base main local em branch release/arquivo-lancamento;
+  develop/remoto ausentes. Sem publicação ou commit nesta execução.
+- Validação: pnpm install --frozen-lockfile, pnpm check, pnpm typecheck,
+  pnpm test e pnpm build: exit 0. API 60 testes, web 9; novos testes sintéticos
+  de pesquisa/revisão/reimportação/falha do catálogo e renderização de links.
+  Teste isolado inicialmente falhou sem domain compilado; depois de build passou.
+- Smoke dos builds por scripts start e HTTP local: API health/version 200,
+  ready 503 database down; web health/ready/version 200. Marcador de versão
+  release-readiness-local, não hash de deploy. Node 22.23.3 / pnpm 12.14.0;
+  Node 24 não ensaiado. Serviços locais encerrados após os pedidos.
+- CLI ausente (127); dlx elyvan@0.8.0 --help falhou com 404. Sem scaffold manual
+  dos blocos. Runbook em ../operations/release.md e decisão Not ready em
+  ../readiness/2026-11-14-lancamento-arquivo.md. 9a/9c/9d Done; 9b/9e Blocked.
+  Plano global Paused: faltam base develop, blocos, fontes/direitos reais, política
+  privada, PostgreSQL, restauro/rollback e validação autorizada. Não há medição
+  de uma base remota nem evidência de lançamento do acervo real.

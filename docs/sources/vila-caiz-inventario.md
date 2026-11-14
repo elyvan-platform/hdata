@@ -100,3 +100,14 @@ Todos os livros listados estão sem acesso ao conteúdo: as páginas de catálog
 - Os intervalos e volumes vêm de trechos de pesquisa e de agregadores; podem estar errados.
 - Os totais 39/27/22 divergem; enquanto não houver lista nominal, o total não está validado.
 - O intervalo do registo paroquial (1691–1855) pode indicar uma coleção distinta; não se fundiu com o fundo do ADPRT.
+
+## Readiness do lançamento (2026-11-14)
+
+| Fonte | Cobertura demonstrada nesta entrega | Limitação |
+|---|---|---|
+| Catálogo ADPRT/Digitarq | Nenhum percurso real até à fonte validado | 39/27/22 por reconciliar; endpoint e direitos por confirmar |
+| Protótipo / índices secundários | Nenhum ficheiro recuperado | 484/254 não importados nem validados |
+| Transcrições de óbitos / piloto | Nenhuma medição real | Páginas e direitos não disponíveis; piloto excluído |
+
+Não foram consultadas contagens de uma implantação. Ausência de evidência local
+não prova zero assentos num serviço remoto. Ver [readiness](../readiness/2026-11-14-lancamento-arquivo.md).

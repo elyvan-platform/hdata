@@ -61,3 +61,10 @@ mediano ≤ 10 % nos assentos emparelhados, recall de assentos ≥ 90 %, nenhuma
 execuções, e a confiança separar bem acertos de erros (só então deixa de ser tratada como mera
 estimativa e pode ser mostrada como percentagem). Antes disso, rotas de revisão e verificação de
 direitos têm de existir.
+
+## Âmbito do lançamento (tarefa 09)
+
+O piloto e o processamento em lote ficam fora do lançamento. Manter
+ANTHROPIC_API_KEY ausente no serviço API para não arrancar o worker. Não existem
+medições nem páginas reais autorizadas que permitam declarar este piloto validado.
+A preparação de release não retoma nem fecha o plano de extração pausado.
