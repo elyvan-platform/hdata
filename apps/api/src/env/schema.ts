@@ -47,7 +47,7 @@ export const envSchema = z.object({
 		.describe(
 			'JSON array of {"token","id","role"} editorial actors; role is editor, reviewer, publisher or admin (optional; unset disables /review)',
 		),
-	ANTHROPIC_API_KEY: z
+	OPENROUTER_API_KEY: z
 		.string()
 		.min(1)
 		.optional()
@@ -57,7 +57,7 @@ export const envSchema = z.object({
 	EXTRACTION_MODEL: z
 		.string()
 		.min(1)
-		.default("claude-sonnet-5-5")
+		.default("google/gemini-2.5-flash")
 		.describe("Model identifier used to propose transcriptions"),
 	EXTRACTION_MAX_ATTEMPTS: z.coerce
 		.number()

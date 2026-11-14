@@ -7,7 +7,7 @@ Propõe transcrições de assentos a partir de imagens de manuscritos. Código e
 ## Fluxo
 
 1. `pnpm --filter @hdata/api extraction:enqueue <image-uuid>` cria (ou encontra) a execução e
-   põe-na na fila pg-boss `extraction`. O worker arranca com a API quando `ANTHROPIC_API_KEY` existe.
+   põe-na na fila pg-boss `extraction`. O worker arranca com a API quando `OPENROUTER_API_KEY` existe.
 2. O worker descarrega a imagem (`image_ref.url`), chama o modelo e valida a resposta com
    `modelOutputSchema`. Cada assento fica numa `extraction_proposal` com a região da imagem.
 3. Um editor aceita ou rejeita (`reviewProposal`, papel com `edit`). Aceitar cria uma revisão
@@ -65,6 +65,8 @@ direitos têm de existir.
 ## Âmbito do lançamento (tarefa 09)
 
 O piloto e o processamento em lote ficam fora do lançamento. Manter
-ANTHROPIC_API_KEY ausente no serviço API para não arrancar o worker. Não existem
+OPENROUTER_API_KEY ausente no serviço API para não arrancar o worker. Não existem
 medições nem páginas reais autorizadas que permitam declarar este piloto validado.
 A preparação de release não retoma nem fecha o plano de extração pausado.
+
+O fornecedor é o OpenRouter; configure `OPENROUTER_API_KEY` e, opcionalmente, `EXTRACTION_MODEL` com um identificador OpenRouter que aceite imagens (por omissão, `google/gemini-2.5-flash`). A chave Anthropic anterior não ativa o worker.

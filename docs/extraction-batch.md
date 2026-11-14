@@ -20,7 +20,7 @@ O lote usa `extraction_run` e `extraction_proposal`, o fornecedor HTR existente 
    significando autorização verificada para processamento externo. O manifesto
    exige também `authorized: true` e `rightsEvidence` com a evidência aplicável.
    Consulta pública não basta. Identificadores e direitos são revistos pelo operador.
-5. Definir DATABASE_URL e ANTHROPIC_API_KEY no ambiente validado da API, configurar
+5. Definir DATABASE_URL e OPENROUTER_API_KEY no ambiente validado da API, configurar
    o modelo disponível e executar o mesmo comando com `--apply` e um novo caminho
    de relatório. O ficheiro de saída é privado (0600) e nunca sobrescrito.
 

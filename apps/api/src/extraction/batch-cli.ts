@@ -3,7 +3,7 @@ import { extractionBatchSchema } from "@hdata/domain";
 import { createDatabase } from "../db/client.ts";
 import { parseEnv } from "../env/index.ts";
 import { previewBatch, runExtractionBatch } from "./batch.ts";
-import { createAnthropicProvider, createUrlImageLoader } from "./provider.ts";
+import { createOpenRouterProvider, createUrlImageLoader } from "./provider.ts";
 
 const [manifestFile, reportFile, mode] = process.argv.slice(2);
 if (!manifestFile || !reportFile || (mode !== undefined && mode !== "--apply"))
@@ -18,7 +18,7 @@ try {
 		);
 	} else {
 		const env = parseEnv(process.env);
-		if (!env.ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is required for --apply");
+		if (!env.OPENROUTER_API_KEY) throw new Error("OPENROUTER_API_KEY is required for --apply");
 		const { pool } = createDatabase(env.DATABASE_URL);
 		const lock = await pool.connect();
 		try {
@@ -28,8 +28,8 @@ try {
 			);
 			if (!acquired.rows[0]?.acquired) throw new Error("Another extraction batch is active");
 			const result = await runExtractionBatch(pool, manifest, {
-				provider: createAnthropicProvider({
-					apiKey: env.ANTHROPIC_API_KEY,
+				provider: createOpenRouterProvider({
+					apiKey: env.OPENROUTER_API_KEY,
 					model: env.EXTRACTION_MODEL,
 					timeoutMs: env.EXTRACTION_TIMEOUT_MS,
 				}),

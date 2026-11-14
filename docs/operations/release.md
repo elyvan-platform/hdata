@@ -31,7 +31,7 @@ Conferir os schemas `apps/{api,web}/src/env/schema.ts` e exemplos gerados:
 | API | DIGITARQ_CATALOG_URL, DIGITARQ_FONDS_REFERENCE, DIGITARQ_TIMEOUT_MS | Endpoint e contrato confirmados; fundo PT/ADPRT/PRQ/PAMT38; timeout limitado |
 | API | CATALOG_REFRESH_TOKEN | Segredo com pelo menos 16 caracteres; ausente desativa refresh |
 | API | EDITORIAL_ACTORS | Segredo JSON de atores/tokens/papéis; ausente desativa revisão |
-| API | ANTHROPIC_API_KEY | Ausente: worker desligado neste lançamento |
+| API | OPENROUTER_API_KEY | Ausente: worker desligado neste lançamento |
 | API | EXTRACTION_MODEL, EXTRACTION_MAX_ATTEMPTS, EXTRACTION_TIMEOUT_MS | Não configurar para ativar piloto; defaults não arrancam worker sem chave |
 | API futura | SENTRY_DSN | Ainda não suportada pelo schema; configurar só após bloco e wiring validados |
 

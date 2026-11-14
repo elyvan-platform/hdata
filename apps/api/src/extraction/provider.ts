@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { illegibleMarker } from "@hdata/domain";
+import { z } from "zod";
 
 export type LoadedImage = { bytes: Uint8Array; mediaType: string; sha256: string };
 export type ImageLoader = (image: {
@@ -79,8 +80,8 @@ Responde apenas com JSON: {"seats":[{"recordType":{"value":"baptism|marriage|dea
 "participants":[{"participant":{"role":"","nameAsWritten":"","legibility":"legible|uncertain|illegible","position":0},"confidence":0}],
 "region":null}]}`;
 
-/** Anthropic Messages API provider; the key never leaves the server. */
-export function createAnthropicProvider(options: {
+/** OpenRouter Chat Completions API provider; the key never leaves the server. */
+export function createOpenRouterProvider(options: {
 	apiKey: string;
 	model: string;
 	timeoutMs: number;
@@ -88,37 +89,34 @@ export function createAnthropicProvider(options: {
 }): ModelProvider {
 	const doFetch = options.fetch ?? fetch;
 	return {
-		model: "anthropic",
+		model: "openrouter",
 		version: options.model,
 		promptVersion,
 		async extract(image) {
 			let response: Response;
 			try {
-				response = await doFetch("https://api.anthropic.com/v1/messages", {
+				response = await doFetch("https://openrouter.ai/api/v1/chat/completions", {
 					method: "POST",
 					signal: AbortSignal.timeout(options.timeoutMs),
 					headers: {
 						"content-type": "application/json",
-						"x-api-key": options.apiKey,
-						"anthropic-version": "2023-06-01",
+						authorization: `Bearer ${options.apiKey}`,
 					},
 					body: JSON.stringify({
 						model: options.model,
 						max_tokens: 8192,
-						system: systemPrompt,
 						messages: [
+							{ role: "system", content: systemPrompt },
 							{
 								role: "user",
 								content: [
+									{ type: "text", text: "Transcreve os assentos desta página." },
 									{
-										type: "image",
-										source: {
-											type: "base64",
-											media_type: image.mediaType,
-											data: Buffer.from(image.bytes).toString("base64"),
+										type: "image_url",
+										image_url: {
+											url: `data:${image.mediaType};base64,${Buffer.from(image.bytes).toString("base64")}`,
 										},
 									},
-									{ type: "text", text: "Transcreve os assentos desta página." },
 								],
 							},
 						],
@@ -132,8 +130,18 @@ export function createAnthropicProvider(options: {
 				const make = transient ? TransientExtractionError : PermanentExtractionError;
 				throw new make("model_http_error", `Model API answered ${response.status}`);
 			}
-			const body = (await response.json()) as { content?: { type: string; text?: string }[] };
-			const text = body.content?.find((part) => part.type === "text")?.text;
+			let body: unknown;
+			try {
+				body = await response.json();
+			} catch {
+				throw new PermanentExtractionError("model_output", "Model response is not valid JSON");
+			}
+			const parsed = z
+				.object({
+					choices: z.array(z.object({ message: z.object({ content: z.string().nullable() }) })),
+				})
+				.safeParse(body);
+			const text = parsed.success ? parsed.data.choices[0]?.message.content : null;
 			if (!text) throw new PermanentExtractionError("model_output", "Model returned no text");
 			try {
 				return JSON.parse(text.replace(/^```(?:json)?\s*|\s*```$/g, ""));

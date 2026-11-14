@@ -8,7 +8,7 @@ import { afterAll, beforeAll, expect, it } from "vitest";
 import { previewBatch, runExtractionBatch } from "./batch.ts";
 import { evaluatePilot } from "./evaluate.ts";
 import {
-	createAnthropicProvider,
+	createOpenRouterProvider,
 	createUrlImageLoader,
 	type ImageLoader,
 	type ModelProvider,
@@ -200,7 +200,7 @@ it("loads images and calls the model API with traceable failures", async () => {
 	await expect(html({ url: "https://x", storageKey: null })).rejects.toMatchObject({
 		code: "image_type",
 	});
-	const model = createAnthropicProvider({
+	const model = createOpenRouterProvider({
 		apiKey: "k",
 		model: "m",
 		timeoutMs: 1000,
@@ -209,6 +209,35 @@ it("loads images and calls the model API with traceable failures", async () => {
 	await expect(
 		model.extract({ bytes: new Uint8Array([1]), mediaType: "image/jpeg", sha256: "a" }),
 	).rejects.toBeInstanceOf(TransientExtractionError);
+});
+
+it("sends images to OpenRouter and validates its response", async () => {
+	const image = { bytes: new Uint8Array([1, 2]), mediaType: "image/jpeg", sha256: "a" };
+	const model = createOpenRouterProvider({
+		apiKey: "secret",
+		model: "google/gemini-2.5-flash",
+		timeoutMs: 1000,
+		fetch: async (url, init) => {
+			expect(url).toBe("https://openrouter.ai/api/v1/chat/completions");
+			expect(init?.headers).toMatchObject({ authorization: "Bearer secret" });
+			const request = JSON.parse(String(init?.body));
+			expect(request.model).toBe("google/gemini-2.5-flash");
+			expect(request.messages[1].content[1]).toEqual({
+				type: "image_url",
+				image_url: { url: "data:image/jpeg;base64,AQI=" },
+			});
+			return Response.json({ choices: [{ message: { content: '{"seats":[]}' } }] });
+		},
+	});
+	expect(model.model).toBe("openrouter");
+	await expect(model.extract(image)).resolves.toEqual({ seats: [] });
+	const invalid = createOpenRouterProvider({
+		apiKey: "secret",
+		model: "m",
+		timeoutMs: 1000,
+		fetch: async () => Response.json({ choices: [] }),
+	});
+	await expect(invalid.extract(image)).rejects.toMatchObject({ code: "model_output" });
 });
 
 it("measures error rate against manually reviewed seats", () => {

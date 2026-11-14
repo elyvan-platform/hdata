@@ -1,7 +1,7 @@
 import { PgBoss } from "pg-boss";
 import { createDatabase } from "../db/client.ts";
 import { parseEnv } from "../env/index.ts";
-import { createAnthropicProvider } from "./provider.ts";
+import { createOpenRouterProvider } from "./provider.ts";
 import { requestExtraction } from "./service.ts";
 import { extractionQueue } from "./worker.ts";
 
@@ -12,8 +12,8 @@ if (!imageId) {
 	process.exit(2);
 }
 const env = parseEnv(process.env);
-if (!env.ANTHROPIC_API_KEY) {
-	console.error("ANTHROPIC_API_KEY is required");
+if (!env.OPENROUTER_API_KEY) {
+	console.error("OPENROUTER_API_KEY is required");
 	process.exit(2);
 }
 const { pool } = createDatabase(env.DATABASE_URL);
@@ -22,8 +22,8 @@ try {
 	await boss.start();
 	const run = await requestExtraction(pool, {
 		imageId,
-		provider: createAnthropicProvider({
-			apiKey: env.ANTHROPIC_API_KEY,
+		provider: createOpenRouterProvider({
+			apiKey: env.OPENROUTER_API_KEY,
 			model: env.EXTRACTION_MODEL,
 			timeoutMs: env.EXTRACTION_TIMEOUT_MS,
 		}),
