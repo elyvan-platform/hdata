@@ -1,0 +1,86 @@
+:root {
+	color-scheme: light dark;
+	--accent: #7a3e12;
+	--border: color-mix(in srgb, currentColor 25%, transparent);
+}
+body {
+	margin: 0;
+	font:
+		1rem / 1.5 system-ui,
+		sans-serif;
+}
+main {
+	max-width: 62rem;
+	margin: 0 auto;
+	padding: 1rem;
+}
+a {
+	color: var(--accent);
+}
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+	outline: 3px solid currentColor;
+	outline-offset: 2px;
+}
+.skip-link {
+	position: absolute;
+	left: -999px;
+}
+.skip-link:focus {
+	left: 1rem;
+	top: 1rem;
+	background: Canvas;
+	padding: 0.5rem;
+	z-index: 1;
+}
+.site-nav {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+	padding: 0.75rem 1rem;
+	border-bottom: 1px solid var(--border);
+}
+.search-form {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+	gap: 0.75rem;
+	align-items: end;
+}
+.search-form .wide {
+	grid-column: 1 / -1;
+}
+.search-form label {
+	display: block;
+	font-weight: 600;
+}
+.search-form input,
+.search-form select,
+.search-form button {
+	width: 100%;
+	box-sizing: border-box;
+	font: inherit;
+	padding: 0.5rem;
+}
+.results {
+	list-style: none;
+	padding: 0;
+	display: grid;
+	gap: 0.75rem;
+}
+.results li,
+.panel {
+	border: 1px solid var(--border);
+	border-radius: 0.5rem;
+	padding: 0.75rem 1rem;
+}
+.pager {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+	align-items: center;
+}
+.muted {
+	opacity: 0.8;
+}

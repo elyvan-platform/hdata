@@ -53,4 +53,26 @@ describe("api client", () => {
 		expect(error instanceof ApiError && error.editorialError?.error).toBe("conflict");
 		expect(error instanceof ApiError && error.isAuthError).toBe(false);
 	});
+
+	it("sends only the filled search parameters and parses the page", async () => {
+		let url = "";
+		const client = createApiClient({
+			baseUrl: "http://api",
+			fetch: async (input) => {
+				url = String(input);
+				return new Response(JSON.stringify({ total: 0, page: 2, pageSize: 20, results: [] }), {
+					status: 200,
+				});
+			},
+		});
+		const page = await client.search({ q: "joão", type: "", book: undefined, page: 2 });
+		expect(url).toBe("http://api/search?q=jo%C3%A3o&page=2");
+		expect(page.results).toEqual([]);
+	});
+
+	it("surfaces a missing record as a 404 ApiError", async () => {
+		const client = createApiClient({ baseUrl: "http://api", fetch: json({}, 404) });
+		const error = await client.record("x").catch((e: unknown) => e);
+		expect(error instanceof ApiError && error.status).toBe(404);
+	});
 });

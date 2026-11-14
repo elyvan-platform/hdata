@@ -1,22 +1,192 @@
 import { createApiClient } from "@hdata/api-client";
+import {
+	type CatalogBook,
+	type CoverageResponse,
+	recordTypes,
+	type SearchQuery,
+	type SearchResponse,
+	searchQuerySchema,
+} from "@hdata/domain";
 import { getEnv } from "../env/index.ts";
+import { describeError, recordTypeLabel, searchHref } from "../search/labels.ts";
+import { Participants } from "../search/participants.tsx";
+import { RecordFacts } from "../search/record-details.tsx";
+import { SourceLinks } from "../search/source-links.tsx";
 
 export const dynamic = "force-dynamic";
 
-async function apiStatus(): Promise<string> {
+type Outcome<T> = { ok: true; value: T } | { ok: false; error: string };
+
+async function attempt<T>(work: () => Promise<T>): Promise<Outcome<T>> {
 	try {
-		const ready = await createApiClient({ baseUrl: getEnv().API_URL }).ready();
-		return ready.status;
+		return { ok: true, value: await work() };
 	} catch (error) {
-		return `unavailable (${error instanceof Error ? error.message : "unknown error"})`;
+		return { ok: false, error: describeError(error) };
 	}
 }
 
-export default async function Home() {
+const firstValue = (value: string | string[] | undefined) =>
+	Array.isArray(value) ? value[0] : value;
+
+function Coverage({
+	coverage,
+	catalogBooks,
+}: {
+	coverage: Outcome<CoverageResponse>;
+	catalogBooks: number | undefined;
+}) {
+	if (!coverage.ok) return <p role="alert">Cobertura indisponível: {coverage.error}</p>;
+	const { publishedRecords, books } = coverage.value;
+	const withSeats = books.filter((book) => book.publishedRecords > 0).length;
+	if (publishedRecords === 0)
+		return (
+			<p>
+				Ainda não há assentos publicados: a pesquisa não devolverá resultados até serem validados e
+				publicados.
+			</p>
+		);
 	return (
-		<main>
-			<h1>hdata</h1>
-			<p>API: {await apiStatus()}</p>
+		<p>
+			{publishedRecords} {publishedRecords === 1 ? "assento publicado" : "assentos publicados"} em{" "}
+			{withSeats} {withSeats === 1 ? "livro" : "livros"}
+			{catalogBooks === undefined ? "" : ` de ${catalogBooks} no catálogo`}. A cobertura é parcial:
+			só se pesquisa o que já foi revisto e publicado.
+		</p>
+	);
+}
+
+function Results({ query, outcome }: { query: SearchQuery; outcome: Outcome<SearchResponse> }) {
+	if (!outcome.ok) return <p role="alert">A pesquisa falhou: {outcome.error}. Tente novamente.</p>;
+	const { total, page, pageSize, results } = outcome.value;
+	if (total === 0)
+		return <p role="status">Nenhum assento publicado corresponde a esta pesquisa.</p>;
+	const pages = Math.ceil(total / pageSize);
+	const link = (target: number) => searchHref({ ...query, page: target });
+	return (
+		<>
+			<p role="status">
+				{total} {total === 1 ? "resultado" : "resultados"} — página {page} de {pages}
+			</p>
+			{results.length === 0 && (
+				<p>
+					Esta página não tem resultados. <a href={link(pages)}>Ir para a última página</a>
+				</p>
+			)}
+			<ol className="results">
+				{results.map((record) => (
+					<li key={record.recordId}>
+						<h3>
+							<a href={`/assento/${record.recordId}`}>
+								{record.participants[0]?.name ?? "Assento sem nome legível"}
+							</a>
+						</h3>
+						<RecordFacts record={record} />
+						<Participants record={record} />
+						<SourceLinks record={record} />
+					</li>
+				))}
+			</ol>
+			<nav className="pager" aria-label="Paginação dos resultados">
+				{page > 1 ? <a href={link(page - 1)}>Página anterior</a> : <span>Página anterior</span>}
+				{page < pages ? <a href={link(page + 1)}>Página seguinte</a> : <span>Página seguinte</span>}
+			</nav>
+		</>
+	);
+}
+
+export default async function Home({
+	searchParams,
+}: {
+	searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+	const raw = Object.fromEntries(
+		Object.entries(await searchParams).map(([key, value]) => [key, firstValue(value)]),
+	);
+	const parsed = searchQuerySchema.safeParse(raw);
+	const searched = Object.keys(raw).length > 0;
+	const client = createApiClient({ baseUrl: getEnv().API_URL });
+	const [catalog, coverage, outcome] = await Promise.all([
+		attempt(() => client.catalog()),
+		attempt(() => client.coverage()),
+		searched && parsed.success ? attempt(() => client.search(parsed.data)) : undefined,
+	]);
+	const books: CatalogBook[] = catalog.ok ? catalog.value.books : [];
+	const query = parsed.success ? parsed.data : undefined;
+
+	return (
+		<main id="conteudo">
+			<h1>Memória de Vila Caiz</h1>
+			<p>
+				Pesquise os assentos paroquiais de Vila Caiz por nome, familiares, lugar, profissão ou data.
+				Cada resultado leva à fonte oficial.
+			</p>
+			<Coverage coverage={coverage} catalogBooks={catalog.ok ? books.length : undefined} />
+			<search>
+				<form className="search-form" method="get" action="/">
+					<div className="wide">
+						<label htmlFor="q">Nome, familiares, lugar, profissão ou data</label>
+						<input id="q" name="q" type="search" defaultValue={query?.q ?? ""} maxLength={200} />
+					</div>
+					<div>
+						<label htmlFor="type">Tipo</label>
+						<select id="type" name="type" defaultValue={query?.type ?? ""}>
+							<option value="">Todos</option>
+							{recordTypes.map((type) => (
+								<option key={type} value={type}>
+									{recordTypeLabel[type]}
+								</option>
+							))}
+						</select>
+					</div>
+					<div>
+						<label htmlFor="book">Livro</label>
+						<select id="book" name="book" defaultValue={query?.book ?? ""} disabled={!catalog.ok}>
+							<option value="">Todos</option>
+							{books.map((book) => (
+								<option key={book.referenceCode} value={book.referenceCode}>
+									{book.referenceCode} — {book.title}
+								</option>
+							))}
+						</select>
+					</div>
+					<div>
+						<label htmlFor="from">Do ano</label>
+						<input
+							id="from"
+							name="from"
+							type="number"
+							min={1}
+							max={9999}
+							defaultValue={query?.from}
+						/>
+					</div>
+					<div>
+						<label htmlFor="to">Ao ano</label>
+						<input id="to" name="to" type="number" min={1} max={9999} defaultValue={query?.to} />
+					</div>
+					<div>
+						<button type="submit">Pesquisar</button>
+					</div>
+				</form>
+			</search>
+			{!catalog.ok && (
+				<p role="alert">
+					Lista de livros indisponível ({catalog.error}); a pesquisa por livro está desativada.
+				</p>
+			)}
+			<p>
+				<a href="/catalogo">Ver o catálogo completo dos livros</a>
+			</p>
+			<section aria-labelledby="resultados">
+				<h2 id="resultados">Resultados</h2>
+				{!parsed.success && (
+					<p role="alert">
+						Pesquisa inválida: {parsed.error.issues.map((issue) => issue.message).join("; ")}.
+					</p>
+				)}
+				{query && outcome && <Results query={query} outcome={outcome} />}
+				{!searched && <p>Escreva um nome ou escolha filtros para começar.</p>}
+			</section>
 		</main>
 	);
 }

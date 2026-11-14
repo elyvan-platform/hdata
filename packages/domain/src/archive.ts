@@ -9,6 +9,7 @@ export const validationStatuses = [
 	"published",
 ] as const;
 export const recordTypeSchema = z.enum(recordTypes);
+export type RecordType = z.infer<typeof recordTypeSchema>;
 export const validationStatusSchema = z.enum(validationStatuses);
 export const partialDateSchema = z
 	.object({
@@ -41,6 +42,7 @@ export const partialDateSchema = z
 				ctx.addIssue({ code: "custom", message: "Invalid calendar date" });
 		}
 	});
+export type PartialDate = z.infer<typeof partialDateSchema>;
 const id = z.uuid();
 const externalIdentity = { sourceId: id, externalId: z.string().min(1).optional() };
 export const sourceSchema = z.object({

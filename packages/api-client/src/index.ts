@@ -2,9 +2,11 @@ import {
 	type CatalogErrorResponse,
 	type CatalogRefreshResponse,
 	type CatalogResponse,
+	type CoverageResponse,
 	catalogErrorResponseSchema,
 	catalogRefreshResponseSchema,
 	catalogResponseSchema,
+	coverageResponseSchema,
 	type EditorialDecision,
 	type EditorialError,
 	type EditRevisionRequest,
@@ -19,6 +21,11 @@ import {
 	readyResponseSchema,
 	reviewQueueResponseSchema,
 	revisionViewSchema,
+	type SearchQueryInput,
+	type SearchResponse,
+	type SearchResult,
+	searchResponseSchema,
+	searchResultSchema,
 	type VersionResponse,
 	versionResponseSchema,
 } from "@hdata/domain";
@@ -148,6 +155,18 @@ export function createApiClient(options: ApiClientOptions) {
 					call("POST", `/review/records/${recordId}/${decision}`, revisionViewSchema, body),
 			};
 		},
+		/** Published seats only; empty parameters are omitted so the API applies its defaults. */
+		search(query: SearchQueryInput = {}): Promise<SearchResponse> {
+			const params = new URLSearchParams();
+			for (const [key, value] of Object.entries(query))
+				if (value !== undefined && value !== "") params.set(key, String(value));
+			const suffix = params.size > 0 ? `?${params}` : "";
+			return request(`/search${suffix}`, searchResponseSchema);
+		},
+		coverage: (): Promise<CoverageResponse> => request("/search/coverage", coverageResponseSchema),
+		/** A record that is not published (or does not exist) throws an `ApiError` with status 404. */
+		record: (recordId: string): Promise<SearchResult> =>
+			request(`/records/${encodeURIComponent(recordId)}`, searchResultSchema),
 		version: (): Promise<VersionResponse> => request("/version", versionResponseSchema),
 	};
 }

@@ -33,7 +33,7 @@ const worker = env.ANTHROPIC_API_KEY
 			maxAttempts: env.EXTRACTION_MAX_ATTEMPTS,
 		})
 	: undefined;
-const app = buildApp({ env, database, catalog, ...(editorial && { editorial }) });
+const app = buildApp({ env, database, catalog, search: { pool }, ...(editorial && { editorial }) });
 
 try {
 	await app.listen({ host: env.HOST, port: env.PORT });

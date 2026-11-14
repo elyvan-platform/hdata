@@ -1,6 +1,7 @@
 import { createApiClient } from "@hdata/api-client";
 import type { CatalogResponse } from "@hdata/domain";
 import { getEnv } from "../../env/index.ts";
+import { searchHref } from "../../search/labels.ts";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +10,18 @@ const dataLabel = {
 	stored_copy: "Cópia guardada (a última atualização falhou)",
 	none: "Sem catálogo válido",
 } as const;
+
+async function loadCounts(): Promise<Map<string, number> | undefined> {
+	try {
+		const { books } = await createApiClient({ baseUrl: getEnv().API_URL }).coverage();
+		return new Map(
+			books.flatMap((b) => (b.referenceCode ? [[b.referenceCode, b.publishedRecords]] : [])),
+		);
+	} catch {
+		// Counts are supplementary; without them the page says so instead of showing zeros.
+		return undefined;
+	}
+}
 
 async function load(): Promise<{ catalog: CatalogResponse } | { error: string }> {
 	try {
@@ -19,17 +32,17 @@ async function load(): Promise<{ catalog: CatalogResponse } | { error: string }>
 }
 
 export default async function CatalogPage() {
-	const result = await load();
+	const [result, counts] = await Promise.all([load(), loadCounts()]);
 	if ("error" in result)
 		return (
-			<main>
+			<main id="conteudo">
 				<h1>Catálogo</h1>
 				<p role="alert">Catálogo indisponível: {result.error}</p>
 			</main>
 		);
 	const { status, books } = result.catalog;
 	return (
-		<main>
+		<main id="conteudo">
 			<h1>Catálogo</h1>
 			<p>{dataLabel[status.data]}</p>
 			<p>Último sucesso: {status.lastSuccessAt ?? "nunca"}</p>
@@ -46,6 +59,13 @@ export default async function CatalogPage() {
 					{books.map((book) => (
 						<li key={book.referenceCode}>
 							{book.referenceCode} — {book.title}
+							<br />
+							<span className="muted">
+								{counts === undefined
+									? "Assentos publicados: indisponível"
+									: `Assentos publicados: ${counts.get(book.referenceCode) ?? 0}`}
+							</span>{" "}
+							<a href={searchHref({ book: book.referenceCode })}>pesquisar neste livro</a>
 							{book.recordUrl && (
 								<>
 									{" "}

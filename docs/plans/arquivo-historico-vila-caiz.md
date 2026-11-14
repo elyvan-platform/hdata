@@ -37,7 +37,7 @@ de executar. Nunca presumir que um bloco gera todo o comportamento de domínio.
 | 4 — Aquisição e importação de fontes | In progress | — | Inventário parcial em `docs/sources/vila-caiz-inventario.md` (sem fontes primárias acedidas; 39/27/22 livros por reconciliar); importador depende de 2 e 3 |
 | 5 — Imagens e armazenamento | Pending | — | Depende de 3; material real depende de direitos em 4 |
 | 6 — Gestão editorial e revisão | Pending | — | Depende de 1 e 3; usa fixtures enquanto 4/5 não disponíveis |
-| 7 — Pesquisa e consulta | Blocked | — | Sem pesquisa integrada, fontes reais e autorização de consulta; ver log da tarefa 12 |
+| 7 — Pesquisa e consulta | In progress | — | Pesquisa de assentos publicados, API, cliente e frontend (`/`, `/catalogo`, `/assento/[id]`) entregues; ver `../search.md` e o log de #80. Faltam ADR da estratégia, decisão de acesso privado/público, Playwright e dados reais |
 | 8 — Publicação, operação e entrega | Pending | — | Depende de 7 e decisão de acesso; direitos apenas para material real |
 
 Estados: `Pending`, `Next`, `In progress`, `Done`, `Blocked`. Cada fase só passa a
@@ -136,8 +136,8 @@ próximo passo e log. Só marcar o plano `Done` quando todas as fases terminarem
   com fixtures; avaliar PostgreSQL FTS/unaccent sem os assumir aprovados.
   Implementar catálogo, filtros, paginação, variantes e apresentação de fontes.
 - Exit criteria:
-  - [ ] Critérios de pesquisa da spec demonstrados em fixtures com acentos e variantes.
-  - [ ] Sem fugas por resultados, contagens, excertos, imagens ou exportações.
+  - [x] Critérios de pesquisa da spec demonstrados em fixtures com acentos e variantes (`apps/api/src/search/search.test.ts`).
+  - [x] Sem fugas por resultados, contagens, excertos ou URLs de imagens: só a última revisão publicada é lida (exportações não existem).
   - [ ] Consulta privada funciona; modo público permanece desativado por predefinição.
 - Validation: testes de pesquisa e permissões na API, Playwright de consulta e
   falha técnica; quatro comandos de raiz e smoke operacional.
@@ -215,3 +215,15 @@ publicação externa e alterações à configuração gerada apenas para documen
   direitos, imagens e índices; importar e rever os dados; implementar pesquisa
   autorizada e reconciliação; medir por livro e fonte e demonstrar o nome novo.
   Não considerar a fase 7 nem os critérios de aceitação concluídos.
+
+- 2026-11-14 — #80 (frontend de pesquisa e catálogo): `GET /search`, `GET /search/coverage`
+  e `GET /records/:id` na API (apenas última revisão `published`), `search`/`coverage`/`record`
+  no `api-client`, e no web a homepage "Memória de Vila Caiz" com pesquisa (nome, familiares,
+  lugar, profissão, data; filtros tipo/livro/período; paginação; estados de carregamento,
+  vazio e erro), `/catalogo` com contagens reais e "pesquisar neste livro", e `/assento/[id]`
+  com ficha oficial, visualizador e imagem. Texto dos manuscritos fica fora (#87). Validado
+  ponta a ponta com Fastify + Next.js em produção sobre PGlite (motor PostgreSQL em WASM);
+  **não** contra um servidor PostgreSQL, indisponível no ambiente. Decisão a confirmar: a
+  consulta serve dados publicados sem sessão (a publicação exige validação e direitos
+  conhecidos); o modo privado/investigador por âmbito continua por implementar. Antes de #83/#84:
+  ADR da estratégia de pesquisa, Playwright e dados reais importados.

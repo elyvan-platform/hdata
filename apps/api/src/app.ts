@@ -7,12 +7,14 @@ import type { Env } from "./env/index.ts";
 import { registerCatalogRoutes } from "./routes/catalog.ts";
 import { registerOperationalRoutes } from "./routes/operational.ts";
 import { registerReviewRoutes } from "./routes/review.ts";
+import { registerSearchRoutes } from "./routes/search.ts";
 
 export function buildApp(options: {
 	env: Env;
 	database: Database;
 	catalog?: CatalogService;
 	editorial?: { pool: Pool; authenticate: Authenticator };
+	search?: { pool: Pool };
 }) {
 	const app = Fastify({ logger: options.env.NODE_ENV !== "test" });
 	registerOperationalRoutes(app, { database: options.database, commit: options.env.COMMIT_SHA });
@@ -22,6 +24,7 @@ export function buildApp(options: {
 			refreshToken: options.env.CATALOG_REFRESH_TOKEN,
 		});
 	if (options.editorial) registerReviewRoutes(app, options.editorial);
+	if (options.search) registerSearchRoutes(app, options.search);
 	app.addHook("onClose", async () => {
 		await options.database.close();
 	});
