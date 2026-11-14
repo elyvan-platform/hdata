@@ -75,3 +75,22 @@ export const proposalListSchema = z.object({
 		}),
 	),
 });
+
+export const bookExtractionRequestSchema = z.object({
+	book: z.string().min(1).max(120),
+	first: z.coerce.number().int().min(1).max(100_000),
+	limit: z.coerce.number().int().min(1).max(20),
+	enqueue: z.boolean(),
+	rightsEvidence: z.string().trim().min(12).max(1000).optional(),
+});
+export const bookExtractionStatusSchema = z.object({
+	total: z.number().int().nonnegative(),
+	pages: z.array(
+		z.object({
+			page: z.number().int().positive(),
+			viewerUrl: z.url(),
+			status: z.enum(["not_queued", "queued", "running", "succeeded", "failed"]),
+			error: z.string().nullable(),
+		}),
+	),
+});

@@ -4,6 +4,7 @@ import type { CatalogService } from "./catalog/refresh-catalog.ts";
 import type { Database } from "./db/client.ts";
 import type { Authenticator } from "./editorial/types.ts";
 import type { Env } from "./env/index.ts";
+import { registerBookExtractionRoutes } from "./routes/book-extraction.ts";
 import { registerCatalogRoutes } from "./routes/catalog.ts";
 import { registerOperationalRoutes } from "./routes/operational.ts";
 import { registerReviewRoutes } from "./routes/review.ts";
@@ -15,6 +16,7 @@ export function buildApp(options: {
 	catalog?: CatalogService;
 	editorial?: { pool: Pool; authenticate: Authenticator };
 	search?: { pool: Pool };
+	extraction?: { pool: Pool; worker: import("./routes/book-extraction.ts").BookWorker };
 }) {
 	const app = Fastify({ logger: options.env.NODE_ENV !== "test" });
 	registerOperationalRoutes(app, { database: options.database, commit: options.env.COMMIT_SHA });
@@ -22,6 +24,11 @@ export function buildApp(options: {
 		registerCatalogRoutes(app, {
 			catalog: options.catalog,
 			refreshToken: options.env.CATALOG_REFRESH_TOKEN,
+		});
+	if (options.extraction)
+		registerBookExtractionRoutes(app, {
+			...options.extraction,
+			token: options.env.CATALOG_REFRESH_TOKEN,
 		});
 	if (options.editorial) registerReviewRoutes(app, options.editorial);
 	if (options.search) registerSearchRoutes(app, options.search);

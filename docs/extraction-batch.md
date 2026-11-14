@@ -116,3 +116,17 @@ Com um token editorial com permissão de edição, abrir `/revisao/propostas`.
 É possível procurar no texto das propostas, abrir a imagem original e aceitar
 uma proposta como rascunho ou rejeitá-la. A validação e publicação continuam
 a usar a revisão editorial existente.
+
+### Pelo portal
+
+Em `/catalogo/transcrever`, selecione um livro, a primeira página (a partir de 1)
+e até 20 páginas por pedido. Use o mesmo token da atualização do catálogo.
+**Ver progresso** consulta o intervalo sem chamar o modelo. **Iniciar transcrição**
+coloca as imagens desse intervalo na fila do worker existente. Consulte novamente
+o mesmo intervalo para ver o estado e o erro por página.
+
+Se a decisão de processamento externo da fonte Digitarq ainda estiver por
+registar, o formulário permite documentá-la mediante confirmação expressa e
+referência da autorização. Essa decisão abrange a fonte inteira: não a registe
+a partir de evidência específica de um só livro ou imagem. A revisão e publicação
+dos assentos continuam na área editorial.

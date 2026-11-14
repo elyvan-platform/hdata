@@ -9,7 +9,8 @@ export type CatalogRouteOptions = {
 	refreshToken?: string | undefined;
 };
 
-function tokenMatches(expected: string, header: string | undefined): boolean {
+export function tokenMatches(expected: string, header: string | undefined): boolean {
+	if (!header?.startsWith("Bearer ")) return false;
 	const given = Buffer.from(header?.replace(/^Bearer /, "") ?? "");
 	const wanted = Buffer.from(expected);
 	return given.length === wanted.length && timingSafeEqual(given, wanted);

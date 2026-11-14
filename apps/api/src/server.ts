@@ -33,7 +33,14 @@ const worker = env.OPENROUTER_API_KEY
 			maxAttempts: env.EXTRACTION_MAX_ATTEMPTS,
 		})
 	: undefined;
-const app = buildApp({ env, database, catalog, search: { pool }, ...(editorial && { editorial }) });
+const app = buildApp({
+	env,
+	database,
+	catalog,
+	search: { pool },
+	extraction: { pool, worker },
+	...(editorial && { editorial }),
+});
 
 try {
 	await app.listen({ host: env.HOST, port: env.PORT });
