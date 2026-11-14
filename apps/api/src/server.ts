@@ -1,10 +1,17 @@
 import { buildApp } from "./app.ts";
+import { createCatalogService } from "./catalog/refresh-catalog.ts";
 import { createDatabase } from "./db/client.ts";
 import { parseEnv } from "./env/index.ts";
 
 const env = parseEnv(process.env);
-const { database } = createDatabase(env.DATABASE_URL);
-const app = buildApp({ env, database });
+const { database, pool } = createDatabase(env.DATABASE_URL);
+const catalog = createCatalogService({
+	pool,
+	url: env.DIGITARQ_CATALOG_URL,
+	fondsReference: env.DIGITARQ_FONDS_REFERENCE,
+	timeoutMs: env.DIGITARQ_TIMEOUT_MS,
+});
+const app = buildApp({ env, database, catalog });
 
 try {
 	await app.listen({ host: env.HOST, port: env.PORT });

@@ -1,4 +1,10 @@
 import {
+	type CatalogErrorResponse,
+	type CatalogRefreshResponse,
+	type CatalogResponse,
+	catalogErrorResponseSchema,
+	catalogRefreshResponseSchema,
+	catalogResponseSchema,
 	type HealthResponse,
 	healthResponseSchema,
 	type ReadyResponse,
@@ -10,11 +16,14 @@ import type { ZodType } from "zod";
 
 export class ApiError extends Error {
 	readonly status: number;
+	/** Present when the API answered a catalog refresh failure with its typed payload. */
+	readonly catalogError: CatalogErrorResponse | undefined;
 
-	constructor(message: string, status: number) {
+	constructor(message: string, status: number, catalogError?: CatalogErrorResponse) {
 		super(message);
 		this.name = "ApiError";
 		this.status = status;
+		this.catalogError = catalogError;
 	}
 
 	/** 401/403: the caller is not authenticated or not allowed. */
@@ -49,6 +58,24 @@ export function createApiClient(options: ApiClientOptions) {
 		health: (): Promise<HealthResponse> => request("/health", healthResponseSchema),
 		/** A 503 carries a valid "not_ready" payload, so it is returned, not thrown. */
 		ready: (): Promise<ReadyResponse> => request("/ready", readyResponseSchema, [503]),
+		catalog: (): Promise<CatalogResponse> => request("/catalog", catalogResponseSchema),
+		/** Refresh failures throw an `ApiError`; `catalogError` carries the code and stored-copy status. */
+		async refreshCatalog(token: string): Promise<CatalogRefreshResponse> {
+			const response = await doFetch(`${base}/catalog/refresh`, {
+				method: "POST",
+				headers: { accept: "application/json", authorization: `Bearer ${token}` },
+			});
+			const body: unknown = await response.json().catch(() => undefined);
+			if (!response.ok) {
+				const typed = catalogErrorResponseSchema.safeParse(body);
+				throw new ApiError(
+					`POST /catalog/refresh failed with status ${response.status}`,
+					response.status,
+					typed.success ? typed.data : undefined,
+				);
+			}
+			return catalogRefreshResponseSchema.parse(body);
+		},
 		version: (): Promise<VersionResponse> => request("/version", versionResponseSchema),
 	};
 }

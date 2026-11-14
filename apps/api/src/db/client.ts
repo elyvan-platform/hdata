@@ -21,5 +21,5 @@ export function createDatabase(connectionString: string) {
 		},
 		close: () => pool.end(),
 	};
-	return { db, database };
+	return { db, database, pool };
 }

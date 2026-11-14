@@ -66,6 +66,7 @@ export const books = pgTable(
 		endDate: jsonb("end_date"),
 		folioCount: integer("folio_count"),
 		sourceUrl: text("source_url"),
+		viewerUrl: text("viewer_url"),
 	},
 	(t) => [
 		uniqueIndex("book_external_unique")
@@ -195,4 +196,31 @@ export const revisionImages = pgTable(
 		region: jsonb("region"),
 	},
 	(t) => [unique("revision_image_unique").on(t.revisionId, t.imageId)],
+);
+export const catalogVersions = pgTable("catalog_version", {
+	id: id(),
+	sourceId: uuid("source_id")
+		.notNull()
+		.references(() => sources.id),
+	fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull().defaultNow(),
+	contentHash: text("content_hash").notNull(),
+	bookCount: integer("book_count").notNull(),
+	viewerCount: integer("viewer_count").notNull(),
+	reconciliation: jsonb("reconciliation").notNull(),
+});
+export const catalogRefreshes = pgTable(
+	"catalog_refresh",
+	{
+		id: id(),
+		sourceId: uuid("source_id")
+			.notNull()
+			.references(() => sources.id),
+		attemptedAt: timestamp("attempted_at", { withTimezone: true }).notNull().defaultNow(),
+		outcome: text("outcome").notNull(),
+		versionId: uuid("version_id").references(() => catalogVersions.id),
+		errorCode: text("error_code"),
+		message: text("message"),
+		durationMs: integer("duration_ms"),
+	},
+	(t) => [check("catalog_refresh_outcome", sql`${t.outcome} in ('success','failure')`)],
 );

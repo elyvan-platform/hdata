@@ -21,3 +21,4 @@ export const versionResponseSchema = z.object({
 export type VersionResponse = z.infer<typeof versionResponseSchema>;
 
 export * from "./archive.ts";
+export * from "./catalog.ts";

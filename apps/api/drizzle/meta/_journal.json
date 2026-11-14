@@ -15,6 +15,13 @@
       "when": 1794615036069,
       "tag": "0001_revision_immutability",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794615812371,
+      "tag": "0002_small_william_stryker",
+      "breakpoints": true
     }
   ]
 }
