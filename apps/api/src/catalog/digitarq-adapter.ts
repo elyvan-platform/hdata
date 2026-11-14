@@ -1,5 +1,7 @@
 import { type CatalogErrorCode, type CatalogSnapshot, catalogSnapshotSchema } from "@hdata/domain";
 
+import { z } from "zod";
+
 export class CatalogError extends Error {
 	readonly code: CatalogErrorCode;
 
@@ -53,9 +55,61 @@ async function fetchOnce(options: AdapterOptions): Promise<unknown> {
 	}
 }
 
+const referenceSchema = z.object({ value: z.string().min(1) });
+const titleSchema = z.array(referenceSchema);
+const digitarqBookSchema = z.object({
+	id: z.string().regex(/^[a-f0-9]{32}$/i),
+	referenceCode: referenceSchema,
+	titles: titleSchema.min(1),
+	hasImages: z.boolean(),
+});
+
+function childrenSchema<T extends z.ZodType>(entry: T) {
+	return z.object({ total: z.number().int().nonnegative(), results: z.array(entry) });
+}
+
+const digitarqFondsSchema = z.object({
+	referenceCode: referenceSchema,
+	titles: titleSchema,
+	children: childrenSchema(
+		z.object({ referenceCode: referenceSchema, children: childrenSchema(digitarqBookSchema) }),
+	),
+});
+
+function normalizeDigitarqFonds(body: unknown): unknown {
+	const parsed = digitarqFondsSchema.safeParse(body);
+	if (!parsed.success) return body;
+
+	const fonds = parsed.data;
+	const series = fonds.children.results;
+	if (
+		series.length !== fonds.children.total ||
+		series.some(({ children }) => children.results.length !== children.total)
+	) {
+		throw new CatalogError("incomplete", "Digitarq returned a partial fonds hierarchy");
+	}
+
+	const origin = "https://digitarq.arquivos.pt";
+	return {
+		fondsReference: fonds.referenceCode.value,
+		title: fonds.titles[0]?.value,
+		expectedBookCount: series.reduce((total, entry) => total + entry.children.total, 0),
+		books: series.flatMap((entry) =>
+			entry.children.results.map((book) => ({
+				referenceCode: book.referenceCode.value,
+				title: book.titles[0]?.value,
+				recordUrl: `${origin}/documentDetails/${book.id}`,
+				viewerUrl: book.hasImages
+					? `${origin}/fileViewer/${book.id}?isRepresentation=false`
+					: undefined,
+			})),
+		),
+	};
+}
+
 /** Checks that a parsed snapshot is the complete catalog of the expected fonds. */
 export function validateSnapshot(body: unknown, fondsReference: string): CatalogSnapshot {
-	const parsed = catalogSnapshotSchema.safeParse(body);
+	const parsed = catalogSnapshotSchema.safeParse(normalizeDigitarqFonds(body));
 	if (!parsed.success)
 		throw new CatalogError("invalid_format", "The catalog response has an unexpected shape", {
 			cause: parsed.error,
@@ -73,7 +127,7 @@ export function validateSnapshot(body: unknown, fondsReference: string): Catalog
 		);
 	const seen = new Set<string>();
 	for (const book of snapshot.books) {
-		if (!book.referenceCode.startsWith(fondsReference))
+		if (!book.referenceCode.startsWith(`${fondsReference}/`))
 			throw new CatalogError(
 				"invalid_format",
 				`Book ${book.referenceCode} does not belong to ${fondsReference}`,

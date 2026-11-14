@@ -188,3 +188,31 @@ acervo real ou validação de produção. Não há manifesto real aprovado nem U
 operacional da API para executar o percurso integral. A tentativa de recuperar
 #89 via GitHub em `fabio7maia/hdata` devolveu 404; não se assumiu que esse
 repositório vazio fosse a origem dos assets. Nenhuma escrita externa foi feita.
+
+## Primeira carga do catálogo de Vila Caiz
+
+No serviço da API, configurar `DIGITARQ_CATALOG_URL` como
+`https://digitarq.arquivos.pt/api/docs/details/615a759ad8b6444fba9237ebfe0890ba?down=2`.
+O fundo predefinido é `PT/ADPRT/PRQ/PAMT38`. Configurar `CATALOG_REFRESH_TOKEN`
+como segredo do serviço (mínimo 16 caracteres). Após aplicar as variáveis,
+implantar a versão com o adaptador do Digitarq e confirmar que as migrações
+foram aplicadas na base usada pela API.
+
+A partir do terminal remoto do serviço da API, usar a variável já disponível
+no processo. O comando não imprime o token:
+
+```sh
+node --input-type=module <<'JS'
+if (!process.env.CATALOG_REFRESH_TOKEN) throw new Error("CATALOG_REFRESH_TOKEN em falta");
+const response = await fetch(`http://127.0.0.1:${process.env.PORT ?? "3001"}/catalog/refresh`, {
+	method: "POST",
+	headers: { Authorization: `Bearer ${process.env.CATALOG_REFRESH_TOKEN}` },
+});
+console.log(response.status, await response.text());
+if (!response.ok) process.exitCode = 1;
+JS
+```
+
+Confirmar HTTP 200, estado `fresh` e a reconciliação dos 39 livros e 27
+visualizadores de referência. Conferir a listagem no catálogo público. A
+carga de livros não publica assentos para pesquisa por nome.

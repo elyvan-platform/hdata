@@ -1,5 +1,6 @@
 import { createApiClient } from "@hdata/api-client";
 import type { CatalogResponse } from "@hdata/domain";
+import Link from "next/link";
 import { getEnv } from "../../env/index.ts";
 import { fondsUrl, summarizeCatalog } from "../../search/catalog-summary.ts";
 import { recordTypeLabel, searchHref } from "../../search/labels.ts";
@@ -48,6 +49,9 @@ export default async function CatalogPage() {
 		return (
 			<main id="conteudo">
 				<h1>Catálogo</h1>
+				<p>
+					<Link href="/catalogo/atualizar">Atualizar catálogo</Link>
+				</p>
 				<p role="alert">Catálogo indisponível: {result.error}</p>
 				<p>
 					Consulte diretamente o <FondsLink />.
@@ -58,6 +62,9 @@ export default async function CatalogPage() {
 	return (
 		<main id="conteudo">
 			<h1>Catálogo</h1>
+			<p>
+				<Link href="/catalogo/atualizar">Atualizar catálogo</Link>
+			</p>
 			<p>{dataLabel[status.data]}</p>
 			<p className="muted">Último sucesso: {status.lastSuccessAt ?? "nunca"}</p>
 			{status.lastAttempt?.outcome === "failure" && (

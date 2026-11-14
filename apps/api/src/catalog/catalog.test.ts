@@ -71,6 +71,31 @@ describe("adapter", () => {
 			expect.objectContaining({ code: "invalid_format" }),
 		);
 	});
+	it("normalizes the public Digitarq hierarchy and rejects a truncated series", () => {
+		const id = "a23aefeee26242a18970f86aa7e57d44";
+		const volume = (number: string, hasImages: boolean) => ({
+			id,
+			referenceCode: { value: `${FONDS}/001/${number}` },
+			titles: [{ value: "Registos de baptismos" }],
+			hasImages,
+		});
+		const children = { total: 2, results: [volume("0001", true), volume("0002", false)] };
+		const series = { referenceCode: { value: `${FONDS}/001` }, children };
+		const response = {
+			referenceCode: { value: FONDS },
+			titles: [{ value: "Paróquia de Vila Caiz" }],
+			children: { total: 1, results: [series] },
+		};
+		const normalized = validateSnapshot(response, FONDS);
+		expect(normalized.expectedBookCount).toBe(2);
+		expect(normalized.books[0]?.viewerUrl).toContain(`/fileViewer/${id}`);
+		expect(normalized.books[1]?.recordUrl).toContain(`/documentDetails/${id}`);
+		expect(normalized.books[1]?.viewerUrl).toBeUndefined();
+		children.total = 3;
+		expect(() => validateSnapshot(response, FONDS)).toThrow(
+			expect.objectContaining({ code: "incomplete" }),
+		);
+	});
 	it("maps HTTP, network and timeout failures", async () => {
 		const code = (f: typeof fetch) =>
 			fetchCatalog({ ...opts, fetch: f }).catch((e: CatalogError) => e.code);
