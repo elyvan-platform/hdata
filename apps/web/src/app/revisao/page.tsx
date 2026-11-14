@@ -44,8 +44,11 @@ export default async function ReviewQueuePage() {
 	return (
 		<main>
 			<h1>Revisão editorial</h1>
+			<p>
+				<Link href="/revisao/propostas">Transcrições automáticas</Link>
+			</p>
 			{result.items.length === 0 ? (
-				<p>Não há transcrições à espera de revisão.</p>
+				<p>Não há assentos à espera de revisão.</p>
 			) : (
 				<ul className="book-list">
 					{result.items.map((item) => (

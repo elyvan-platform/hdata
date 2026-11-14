@@ -62,3 +62,16 @@ export function hasIllegible(seat: ProposedSeat): boolean {
 export const extractionRunStatuses = ["queued", "running", "succeeded", "failed"] as const;
 export const proposalReviewStatuses = ["pending", "accepted", "rejected"] as const;
 export const proposalReviewStatusSchema = z.enum(proposalReviewStatuses);
+
+export const proposalListSchema = z.object({
+	items: z.array(
+		z.object({
+			id: z.uuid(),
+			book: z.string(),
+			viewerUrl: z.url(),
+			sequence: z.number().int().positive(),
+			confidence: z.number().min(0).max(1),
+			text: z.string(),
+		}),
+	),
+});

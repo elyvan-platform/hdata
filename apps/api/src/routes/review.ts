@@ -1,6 +1,8 @@
 import {
+	can,
 	decisionRequestSchema,
 	editRevisionRequestSchema,
+	proposalListSchema,
 	rejectRequestSchema,
 	validationStatusSchema,
 } from "@hdata/domain";
@@ -9,6 +11,7 @@ import type { Pool } from "pg";
 import { z } from "zod";
 import { decide, editRevision, getFiche, listQueue } from "../editorial/service.ts";
 import { type Actor, type Authenticator, EditorialFailure } from "../editorial/types.ts";
+import { ProposalReviewError, reviewProposal } from "../extraction/service.ts";
 
 export type ReviewRouteOptions = { pool: Pool; authenticate: Authenticator };
 
@@ -46,6 +49,61 @@ export function registerReviewRoutes(app: FastifyInstance, options: ReviewRouteO
 					.send({ error: error.code, message: error.message, ...error.details });
 			}
 		};
+
+	app.get(
+		"/review/proposals",
+		handle(async (request, actor) => {
+			if (!can(actor.role, "edit"))
+				throw new EditorialFailure("forbidden", "Sem acesso às propostas");
+			const { q } = parse(z.object({ q: z.string().trim().max(120).default("") }), request.query);
+			const { rows } = await options.pool.query(
+				`SELECT p.id, b.reference_code AS book, i.sequence, p.confidence,
+			        p.content #>> '{originalText,value}' AS text,
+			        b.viewer_url AS viewer, i.external_id
+			 FROM extraction_proposal p
+			 JOIN extraction_run r ON r.id=p.run_id
+			 JOIN image_ref i ON i.id=r.image_id
+			 JOIN book b ON b.id=i.book_id
+			 WHERE p.review_status='pending' AND r.status='succeeded'
+			   AND b.viewer_url IS NOT NULL AND i.external_id ~ '^[0-9]+$'
+			   AND ($1 = '' OR strpos(lower(coalesce(p.content #>> '{originalText,value}', '')),lower($1)) > 0)
+			 ORDER BY p.created_at DESC, p.id LIMIT 50`,
+				[q],
+			);
+			return proposalListSchema.parse({
+				items: rows.flatMap((row) => {
+					const url = new URL(row.viewer);
+					if (
+						url.origin !== "https://digitarq.arquivos.pt" ||
+						!url.pathname.startsWith("/fileViewer/")
+					)
+						return [];
+					url.searchParams.set("selectedFile", row.external_id);
+					url.searchParams.set("fileType", "IMAGE");
+					return [{ ...row, viewerUrl: url.href }];
+				}),
+			});
+		}),
+	);
+	app.post(
+		"/review/proposals/:id",
+		handle(async (request, actor) => {
+			const { id } = parse(z.object({ id: z.uuid() }), request.params);
+			const { decision } = parse(
+				z.object({ decision: z.enum(["accept", "reject"]) }),
+				request.body,
+			);
+			try {
+				return await reviewProposal(options.pool, { proposalId: id, decision, actor });
+			} catch (error) {
+				if (!(error instanceof ProposalReviewError)) throw error;
+				throw new EditorialFailure(
+					error.code === "already_reviewed" ? "conflict" : error.code,
+					error.message,
+				);
+			}
+		}),
+	);
 
 	app.get(
 		"/review/queue",

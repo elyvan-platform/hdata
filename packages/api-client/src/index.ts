@@ -15,6 +15,7 @@ import {
 	ficheSchema,
 	type HealthResponse,
 	healthResponseSchema,
+	proposalListSchema,
 	type ReadyResponse,
 	type ReviewQueueResponse,
 	type RevisionView,
@@ -132,6 +133,16 @@ export function createApiClient(options: ApiClientOptions) {
 				return schema.parse(payload);
 			}
 			return {
+				proposals: (q: string) =>
+					call("GET", `/review/proposals?${new URLSearchParams({ q })}`, proposalListSchema),
+				decideProposal: (id: string, decision: "accept" | "reject") =>
+					call(
+						"POST",
+						`/review/proposals/${encodeURIComponent(id)}`,
+						z.object({ revisionId: z.uuid().nullable() }),
+						{ decision },
+					),
+
 				queue: (): Promise<ReviewQueueResponse> =>
 					call("GET", "/review/queue", reviewQueueResponseSchema),
 				fiche: (recordId: string): Promise<Fiche> =>
