@@ -115,7 +115,7 @@ export default async function Home({
 
 	return (
 		<main id="conteudo">
-			<h1>Memória de Vila Caiz</h1>
+			<h1>Memória de Caiz</h1>
 			<p>
 				Pesquise os assentos paroquiais de Vila Caiz por nome, familiares, lugar, profissão ou data.
 				Cada resultado leva à fonte oficial.

@@ -42,6 +42,36 @@ select:focus-visible {
 	padding: 0.75rem 1rem;
 	border-bottom: 1px solid var(--border);
 }
+.site-nav {
+	align-items: center;
+}
+.brand {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.6rem;
+	margin-right: auto;
+}
+.brand-icon {
+	height: 2rem;
+	width: auto;
+}
+.brand-text {
+	height: 1.25rem;
+	width: auto;
+}
+/* The navy artwork needs a light backing on dark themes. */
+@media (prefers-color-scheme: dark) {
+	.brand {
+		background: #fff;
+		padding: 0.25rem 0.5rem;
+		border-radius: 0.375rem;
+	}
+}
+@media (max-width: 30rem) {
+	.brand-text {
+		display: none;
+	}
+}
 .search-form {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
