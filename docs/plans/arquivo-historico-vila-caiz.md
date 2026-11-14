@@ -37,7 +37,7 @@ de executar. Nunca presumir que um bloco gera todo o comportamento de domínio.
 | 4 — Aquisição e importação de fontes | In progress | — | Inventário parcial em `docs/sources/vila-caiz-inventario.md` (sem fontes primárias acedidas; 39/27/22 livros por reconciliar); importador depende de 2 e 3 |
 | 5 — Imagens e armazenamento | Pending | — | Depende de 3; material real depende de direitos em 4 |
 | 6 — Gestão editorial e revisão | Pending | — | Depende de 1 e 3; usa fixtures enquanto 4/5 não disponíveis |
-| 7 — Pesquisa e consulta | Pending | — | Depende de 6; integra 4/5 quando disponíveis |
+| 7 — Pesquisa e consulta | Blocked | — | Sem pesquisa integrada, fontes reais e autorização de consulta; ver log da tarefa 12 |
 | 8 — Publicação, operação e entrega | Pending | — | Depende de 7 e decisão de acesso; direitos apenas para material real |
 
 Estados: `Pending`, `Next`, `In progress`, `Done`, `Blocked`. Cada fase só passa a
@@ -201,3 +201,17 @@ publicação externa e alterações à configuração gerada apenas para documen
   Manifesto e cobertura das oito entradas em `docs/sources/vila-caiz-lote.json` e
   `vila-caiz-cobertura.json`. Não há páginas enumeradas/autorizadas: fases de
   aquisição e medição real permanecem incompletas. Ver `../extraction-batch.md`.
+- 2026-11-14 — Tarefa 12: verificação local dos pré-requisitos e da cobertura.
+  O único mecanismo de pesquisa identificado é a normalização em `domain/search.ts`;
+  não há pesquisa integrada de assentos, transcrições e metadados, nem controlo de
+  acesso para os seus resultados. O inventário I01–I03 fornece apenas contagens
+  não verificadas para batismos, casamentos e óbitos; I04 pode sobrepor-se-lhes,
+  I05–I07 não têm conteúdo confirmado e I08 pode repetir I01–I03. Não há lista
+  nominal de livros, páginas enumeradas, índices recuperados ou transcrições reais
+  disponíveis para medir cobertura, verificar ligações ou demonstrar um nome novo.
+  Os 22 volumes estimados por série não reconciliam com os 27 do fundo e os 39
+  referidos na tarefa anterior. Nenhuma percentagem de cobertura é justificável.
+  Antes de lançamento e deploy (#83/#84), obter e verificar catálogo nominal,
+  direitos, imagens e índices; importar e rever os dados; implementar pesquisa
+  autorizada e reconciliação; medir por livro e fonte e demonstrar o nome novo.
+  Não considerar a fase 7 nem os critérios de aceitação concluídos.
