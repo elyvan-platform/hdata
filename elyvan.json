@@ -6,18 +6,44 @@
 	"generator": {
 		"cli": "0.8.0"
 	},
-	"apps": [],
+	"apps": [
+		{
+			"name": "web",
+			"template": "nextjs",
+			"path": "apps/web"
+		},
+		{
+			"name": "api",
+			"template": "fastify",
+			"path": "apps/api",
+			"blocks": ["database"]
+		}
+	],
 	"packages": [
 		{
 			"name": "config",
 			"block": "config",
 			"path": "packages/config"
+		},
+		{
+			"name": "domain",
+			"block": "domain",
+			"path": "packages/domain"
+		},
+		{
+			"name": "api-client",
+			"block": "api-client",
+			"path": "packages/api-client"
 		}
 	],
 	"blocks": [
 		{
 			"id": "ci",
 			"target": "project"
+		},
+		{
+			"id": "database",
+			"target": "api"
 		}
 	],
 	"ai": {

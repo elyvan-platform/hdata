@@ -1,0 +1,5 @@
+{
+	"extends": "@hdata/config/tsconfig.node.json",
+	"compilerOptions": { "noEmit": true },
+	"include": ["src", "scripts", "drizzle.config.ts", "vitest.config.ts"]
+}

@@ -10,7 +10,11 @@ A pnpm + Turborepo monorepo: apps in `apps/`, internal packages in `packages/` u
 
 | Path | Name | Contents |
 |---|---|---|
-| `packages/config` | config | Config package |
+| `apps/web` | web | Next.js app |
+| `apps/api` | api | Fastify API with PostgreSQL and Drizzle (`database` block) |
+| `packages/config` | config | Config package, shared tsconfig and `.env.example` generator |
+| `packages/domain` | domain | Shared Zod schemas |
+| `packages/api-client` | api-client | Typed API client built on `domain` |
 
 Requirements: Node.js 24 (`.nvmrc`) and pnpm 12.14.0. `elyvan.json` records how
 the project was generated; the project never depends on the generator to install, build or run.

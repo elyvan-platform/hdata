@@ -1,0 +1,32 @@
+{
+	"name": "@hdata/api",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "node --watch --env-file-if-exists=.env src/server.ts",
+		"build": "tsc -p tsconfig.build.json",
+		"start": "node --env-file-if-exists=.env dist/server.js",
+		"check": "biome check . && node ../../packages/config/scripts/env-example.ts --check",
+		"env:example": "node ../../packages/config/scripts/env-example.ts",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"db:generate": "drizzle-kit generate",
+		"db:migrate": "drizzle-kit migrate"
+	},
+	"dependencies": {
+		"@hdata/domain": "workspace:*",
+		"drizzle-orm": "catalog:",
+		"fastify": "catalog:",
+		"pg": "catalog:",
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"@hdata/config": "workspace:*",
+		"@types/node": "catalog:",
+		"@types/pg": "catalog:",
+		"drizzle-kit": "catalog:",
+		"typescript": "catalog:",
+		"vitest": "catalog:"
+	}
+}

@@ -11,3 +11,29 @@ adds what the project's blocks need.
 pnpm install
 pnpm dev
 ```
+
+## Apps
+
+| App | Command | Default URL | Notes |
+|---|---|---|---|
+| `apps/api` (Fastify) | `pnpm --filter @hdata/api dev` | http://localhost:3001 | Needs PostgreSQL at `DATABASE_URL` for `/ready` |
+| `apps/web` (Next.js) | `pnpm --filter @hdata/web dev` | http://localhost:3000 | Reads the API at `API_URL` |
+
+Copy `apps/<app>/.env.example` to `apps/<app>/.env` to override defaults. Both apps answer
+`/health` (liveness), `/ready` (200 ready, 503 not ready) and `/version`. In the API, `/ready`
+runs `select 1` against PostgreSQL and reports `checks.database`. `pnpm build` first, then
+`pnpm --filter <app> start`, runs the production build.
+
+Local PostgreSQL, for example: `docker run -d -p 5432:5432 -e POSTGRES_USER=hdata
+-e POSTGRES_PASSWORD=hdata -e POSTGRES_DB=hdata postgres:17`.
+
+## Database (API)
+
+Drizzle tables live in `apps/api/src/db/schema.ts`. `pnpm --filter @hdata/api db:generate` writes
+SQL migrations to `apps/api/drizzle`; `db:migrate` applies them to `DATABASE_URL`.
+
+## Shared packages
+
+`@hdata/domain` holds the Zod schemas for payloads (operational responses for now);
+`@hdata/api-client` validates API responses with them. Both build to `dist` (`pnpm build`); `test`
+depends on that build through Turborepo.
