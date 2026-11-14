@@ -45,7 +45,7 @@ export default async function CatalogPage() {
 		<main id="conteudo">
 			<h1>Catálogo</h1>
 			<p>{dataLabel[status.data]}</p>
-			<p>Último sucesso: {status.lastSuccessAt ?? "nunca"}</p>
+			<p className="muted">Último sucesso: {status.lastSuccessAt ?? "nunca"}</p>
 			{status.lastAttempt?.outcome === "failure" && (
 				<p role="alert">
 					Última tentativa ({status.lastAttempt.attemptedAt}) falhou: {status.lastAttempt.errorCode}
@@ -55,29 +55,21 @@ export default async function CatalogPage() {
 			{status.data === "none" ? (
 				<p>Ainda não existe nenhum catálogo válido.</p>
 			) : (
-				<ul>
+				<ul className="book-list">
 					{books.map((book) => (
 						<li key={book.referenceCode}>
-							{book.referenceCode} — {book.title}
-							<br />
+							<span className="code">{book.referenceCode}</span>
+							<span className="title">{book.title}</span>
 							<span className="muted">
 								{counts === undefined
 									? "Assentos publicados: indisponível"
 									: `Assentos publicados: ${counts.get(book.referenceCode) ?? 0}`}
-							</span>{" "}
-							<a href={searchHref({ book: book.referenceCode })}>pesquisar neste livro</a>
-							{book.recordUrl && (
-								<>
-									{" "}
-									<a href={book.recordUrl}>ficha</a>
-								</>
-							)}
-							{book.viewerUrl && (
-								<>
-									{" "}
-									<a href={book.viewerUrl}>visualizador</a>
-								</>
-							)}
+							</span>
+							<span className="links">
+								<a href={searchHref({ book: book.referenceCode })}>pesquisar neste livro</a>
+								{book.recordUrl && <a href={book.recordUrl}>ficha</a>}
+								{book.viewerUrl && <a href={book.viewerUrl}>visualizador</a>}
+							</span>
 						</li>
 					))}
 				</ul>

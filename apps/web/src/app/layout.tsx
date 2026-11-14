@@ -23,6 +23,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 					<a href="/catalogo">Catálogo</a>
 				</nav>
 				{children}
+				<footer className="site-footer">
+					{brandName} · Arquivo histórico de Vila Caiz, Amarante
+				</footer>
 			</body>
 		</html>
 	);

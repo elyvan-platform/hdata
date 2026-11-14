@@ -32,9 +32,9 @@ export default async function RecordPage({ params }: { params: Promise<{ recordI
 		);
 	return (
 		<main id="conteudo">
-			<p>
-				<a href="/">← Voltar à pesquisa</a>
-			</p>
+			<a className="back-link" href="/">
+				← Voltar à pesquisa
+			</a>
 			<h1>{record.participants[0]?.name ?? "Assento sem nome legível"}</h1>
 			<RecordFacts record={record} />
 			<h2>Participantes</h2>

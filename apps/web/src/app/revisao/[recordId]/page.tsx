@@ -161,7 +161,7 @@ export default async function FichePage({ params, searchParams }: Params) {
 				</section>
 			)}
 			{permissions.includes("edit") && (
-				<form action={save}>
+				<form className="card" action={save}>
 					<h2>Editar (nova revisão a partir da {current.revisionNumber})</h2>
 					<input type="hidden" name="recordId" value={fiche.recordId} />
 					<input type="hidden" name="baseRevisionId" value={current.id} />
@@ -190,7 +190,7 @@ export default async function FichePage({ params, searchParams }: Params) {
 					<button type="submit">Guardar revisão</button>
 				</form>
 			)}
-			<form action={decide}>
+			<form className="card" action={decide}>
 				<h2>
 					Decisão sobre a revisão {current.revisionNumber} ({current.status})
 				</h2>

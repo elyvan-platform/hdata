@@ -21,10 +21,11 @@ export default function SignInPage() {
 	return (
 		<main>
 			<h1>Entrar na revisão editorial</h1>
-			<form action={signIn}>
-				<label>
-					Token pessoal <input name="token" type="password" required autoComplete="off" />
-				</label>
+			<form className="card" action={signIn}>
+				<div>
+					<label htmlFor="token">Token pessoal</label>
+					<input id="token" name="token" type="password" required autoComplete="off" />
+				</div>
 				<button type="submit">Entrar</button>
 			</form>
 		</main>

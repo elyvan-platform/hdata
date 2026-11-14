@@ -47,7 +47,7 @@ export default async function ReviewQueuePage() {
 			{result.items.length === 0 ? (
 				<p>Não há transcrições à espera de revisão.</p>
 			) : (
-				<ul>
+				<ul className="book-list">
 					{result.items.map((item) => (
 						<li key={item.recordId}>
 							<Link href={`/revisao/${item.recordId}`}>

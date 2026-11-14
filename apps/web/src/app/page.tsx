@@ -115,60 +115,65 @@ export default async function Home({
 
 	return (
 		<main id="conteudo">
-			<h1>Memória de Caiz</h1>
-			<p>
-				Pesquise os assentos paroquiais de Vila Caiz por nome, familiares, lugar, profissão ou data.
-				Cada resultado leva à fonte oficial.
-			</p>
-			<Coverage coverage={coverage} catalogBooks={catalog.ok ? books.length : undefined} />
-			<search>
-				<form className="search-form" method="get" action="/">
-					<div className="wide">
-						<label htmlFor="q">Nome, familiares, lugar, profissão ou data</label>
-						<input id="q" name="q" type="search" defaultValue={query?.q ?? ""} maxLength={200} />
-					</div>
-					<div>
-						<label htmlFor="type">Tipo</label>
-						<select id="type" name="type" defaultValue={query?.type ?? ""}>
-							<option value="">Todos</option>
-							{recordTypes.map((type) => (
-								<option key={type} value={type}>
-									{recordTypeLabel[type]}
-								</option>
-							))}
-						</select>
-					</div>
-					<div>
-						<label htmlFor="book">Livro</label>
-						<select id="book" name="book" defaultValue={query?.book ?? ""} disabled={!catalog.ok}>
-							<option value="">Todos</option>
-							{books.map((book) => (
-								<option key={book.referenceCode} value={book.referenceCode}>
-									{book.referenceCode} — {book.title}
-								</option>
-							))}
-						</select>
-					</div>
-					<div>
-						<label htmlFor="from">Do ano</label>
-						<input
-							id="from"
-							name="from"
-							type="number"
-							min={1}
-							max={9999}
-							defaultValue={query?.from}
-						/>
-					</div>
-					<div>
-						<label htmlFor="to">Ao ano</label>
-						<input id="to" name="to" type="number" min={1} max={9999} defaultValue={query?.to} />
-					</div>
-					<div>
-						<button type="submit">Pesquisar</button>
-					</div>
-				</form>
-			</search>
+			<div className="hero">
+				<span className="eyebrow">Arquivo histórico · Vila Caiz</span>
+				<h1>Memória de Caiz</h1>
+				<p className="lead">
+					Pesquise os assentos paroquiais de Vila Caiz por nome, familiares, lugar, profissão ou
+					data. Cada resultado leva à fonte oficial.
+				</p>
+				<div className="coverage">
+					<Coverage coverage={coverage} catalogBooks={catalog.ok ? books.length : undefined} />
+				</div>
+				<search>
+					<form className="search-form" method="get" action="/">
+						<div className="wide">
+							<label htmlFor="q">Nome, familiares, lugar, profissão ou data</label>
+							<input id="q" name="q" type="search" defaultValue={query?.q ?? ""} maxLength={200} />
+						</div>
+						<div>
+							<label htmlFor="type">Tipo</label>
+							<select id="type" name="type" defaultValue={query?.type ?? ""}>
+								<option value="">Todos</option>
+								{recordTypes.map((type) => (
+									<option key={type} value={type}>
+										{recordTypeLabel[type]}
+									</option>
+								))}
+							</select>
+						</div>
+						<div>
+							<label htmlFor="book">Livro</label>
+							<select id="book" name="book" defaultValue={query?.book ?? ""} disabled={!catalog.ok}>
+								<option value="">Todos</option>
+								{books.map((book) => (
+									<option key={book.referenceCode} value={book.referenceCode}>
+										{book.referenceCode} — {book.title}
+									</option>
+								))}
+							</select>
+						</div>
+						<div>
+							<label htmlFor="from">Do ano</label>
+							<input
+								id="from"
+								name="from"
+								type="number"
+								min={1}
+								max={9999}
+								defaultValue={query?.from}
+							/>
+						</div>
+						<div>
+							<label htmlFor="to">Ao ano</label>
+							<input id="to" name="to" type="number" min={1} max={9999} defaultValue={query?.to} />
+						</div>
+						<div>
+							<button type="submit">Pesquisar</button>
+						</div>
+					</form>
+				</search>
+			</div>
 			{!catalog.ok && (
 				<p role="alert">
 					Lista de livros indisponível ({catalog.error}); a pesquisa por livro está desativada.
@@ -185,7 +190,7 @@ export default async function Home({
 					</p>
 				)}
 				{query && outcome && <Results query={query} outcome={outcome} />}
-				{!searched && <p>Escreva um nome ou escolha filtros para começar.</p>}
+				{!searched && <p className="muted">Escreva um nome ou escolha filtros para começar.</p>}
 			</section>
 		</main>
 	);
