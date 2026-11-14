@@ -51,6 +51,8 @@ export default async function CatalogPage() {
 				<h1>Catálogo</h1>
 				<p>
 					<Link href="/catalogo/atualizar">Atualizar catálogo</Link>
+					{" · "}
+					<Link href="/catalogo/transcrever">Transcrever livros</Link>
 				</p>
 				<p role="alert">Catálogo indisponível: {result.error}</p>
 				<p>
@@ -64,6 +66,8 @@ export default async function CatalogPage() {
 			<h1>Catálogo</h1>
 			<p>
 				<Link href="/catalogo/atualizar">Atualizar catálogo</Link>
+				{" · "}
+				<Link href="/catalogo/transcrever">Transcrever livros</Link>
 			</p>
 			<p>{dataLabel[status.data]}</p>
 			<p className="muted">Último sucesso: {status.lastSuccessAt ?? "nunca"}</p>
