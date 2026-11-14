@@ -14,3 +14,11 @@ A importação serializa alterações por assento com bloqueio de linha. Conteú
   reconciliação). Só é criada quando o conteúdo muda.
 - `catalog_refresh`: cada tentativa (sucesso ou falha, código de erro, duração). Uma falha nunca
   altera livros nem versões. Ver `docs/sources/digitarq.md`.
+
+## Índices e transcrições importados
+
+`historical_entry` guarda snapshots imutáveis de entradas de fontes secundárias,
+separados dos assentos. Fonte/ID externo/hash garantem reimportação idempotente;
+variantes coexistem para revisão sem apagar TIF ou campos originais. Proveniência,
+confiança e espécie (índice/transcrição) acompanham cada snapshot. Ver
+[comando, mapeamentos e limitações](sources/historical-index.md).

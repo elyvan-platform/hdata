@@ -22,6 +22,13 @@
       "when": 1794615812371,
       "tag": "0002_small_william_stryker",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794616245703,
+      "tag": "0003_free_jack_murdock",
+      "breakpoints": true
     }
   ]
 }

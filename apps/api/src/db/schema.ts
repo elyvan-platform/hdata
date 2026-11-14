@@ -224,3 +224,19 @@ export const catalogRefreshes = pgTable(
 	},
 	(t) => [check("catalog_refresh_outcome", sql`${t.outcome} in ('success','failure')`)],
 );
+
+/** Immutable source snapshots; editorial conflicts never overwrite richer evidence. */
+export const historicalEntries = pgTable(
+	"historical_entry",
+	{
+		id: id(),
+		sourceId: uuid("source_id")
+			.notNull()
+			.references(() => sources.id),
+		externalId: text("external_id").notNull(),
+		contentHash: text("content_hash").notNull(),
+		payload: jsonb("payload").notNull(),
+		createdAt: createdAt(),
+	},
+	(t) => [unique("historical_entry_hash_unique").on(t.sourceId, t.externalId, t.contentHash)],
+);

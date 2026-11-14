@@ -12,14 +12,16 @@
 		"typecheck": "tsc --noEmit",
 		"test": "vitest run",
 		"db:generate": "drizzle-kit generate",
-		"db:migrate": "drizzle-kit migrate"
+		"db:migrate": "drizzle-kit migrate",
+		"index:import": "node --experimental-strip-types src/archive/import-index-cli.ts"
 	},
 	"dependencies": {
 		"@hdata/domain": "workspace:*",
 		"drizzle-orm": "catalog:",
 		"fastify": "catalog:",
 		"pg": "catalog:",
-		"zod": "catalog:"
+		"zod": "catalog:",
+		"exceljs": "catalog:"
 	},
 	"devDependencies": {
 		"@electric-sql/pglite": "catalog:",
