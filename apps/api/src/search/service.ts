@@ -41,13 +41,14 @@ type Row = {
 	source_name: string;
 	source_kind: string;
 	source_citation: string | null;
+	original_text: string | null;
 };
 
 const COLUMNS = `
 	r.id AS record_id, r.record_type, b.title AS book_title, b.reference_code AS book_reference,
 	b.source_url AS book_source_url, b.viewer_url AS book_viewer_url,
 	v.id AS revision_id, v.method, v.status, v.date, v.folio, v.place_as_written, v.normalized_place,
-	v.locator, s.name AS source_name, s.kind AS source_kind, s.citation AS source_citation`;
+	v.original_text, v.locator, s.name AS source_name, s.kind AS source_kind, s.citation AS source_citation`;
 
 type ParticipantRow = {
 	revision_id: string;
@@ -99,11 +100,14 @@ function toResult(
 	row: Row,
 	participants: ParticipantRow[],
 	images: SearchResult["images"],
+	query?: string,
 ): SearchResult {
 	return searchResultSchema.parse({
 		recordId: row.record_id,
 		recordType: row.record_type,
 		status: row.status,
+		originalText: row.original_text,
+		excerpt: manuscriptExcerpt(row.original_text, query),
 		date: row.date ?? null,
 		place: row.place_as_written ?? row.normalized_place,
 		folio: row.folio,
@@ -146,14 +150,25 @@ function dateWords(value: unknown): string[] {
 	].filter((word): word is string => word !== undefined);
 }
 
-/**
- * Names, relatives (every participant), place, profession (role and notes) and date. The text of
- * the manuscript is deliberately not searched here. Comparison uses the shared normalization;
- * every query word must be the start of some word, so "joao" finds "João" but is never read as
- * proof of identity.
- */
+/** A bounded excerpt of the published transcription, centred on the first query word. */
+function manuscriptExcerpt(text: string | null, query?: string): string | null {
+	if (!text) return null;
+	// Search individual source words to preserve offsets despite accent normalization.
+	const tokens = normalizeSearchText(query ?? "")
+		.split(/[^\p{L}\p{N}]+/u)
+		.filter(Boolean);
+	const hit = [...text.matchAll(/[\p{L}\p{N}]+/gu)].find((word) =>
+		tokens.some((token) => normalizeSearchText(word[0]).startsWith(token)),
+	);
+	const start = Math.max(0, (hit?.index ?? 0) - 80);
+	const end = Math.min(text.length, start + 280);
+	return `${start > 0 ? "…" : ""}${text.slice(start, end)}${end < text.length ? "…" : ""}`;
+}
+
+/** Search only the published snapshot, including its transcription. */
 function haystack(row: Row, participants: ParticipantRow[]): string[] {
 	const text = [
+		row.original_text,
 		row.place_as_written,
 		row.normalized_place,
 		...participants.flatMap((p) => [
@@ -164,15 +179,15 @@ function haystack(row: Row, participants: ParticipantRow[]): string[] {
 		]),
 	];
 	return [...text.filter((t): t is string => !!t), ...dateWords(row.date)].flatMap((t) =>
-		normalizeSearchText(t).split(" "),
+		normalizeSearchText(t).split(/[^\p{L}\p{N}]+/u),
 	);
 }
 
 function matches(words: string[], query: string): boolean {
-	return normalizeSearchText(query)
-		.split(" ")
-		.filter(Boolean)
-		.every((token) => words.some((word) => word.startsWith(token)));
+	const tokens = normalizeSearchText(query)
+		.split(/[^\p{L}\p{N}]+/u)
+		.filter(Boolean);
+	return tokens.length > 0 && tokens.every((token) => words.some((word) => word.startsWith(token)));
 }
 
 /**
@@ -218,7 +233,12 @@ export async function searchRecords(pool: Pool, query: SearchQuery): Promise<Sea
 		page: query.page,
 		pageSize: query.pageSize,
 		results: pageRows.map((row) =>
-			toResult(row, participants.get(row.revision_id) ?? [], images.get(row.revision_id) ?? []),
+			toResult(
+				row,
+				participants.get(row.revision_id) ?? [],
+				images.get(row.revision_id) ?? [],
+				text,
+			),
 		),
 	};
 }
@@ -242,20 +262,28 @@ export async function getCoverage(pool: Pool): Promise<CoverageResponse> {
 		reference_code: string | null;
 		title: string;
 		published: number;
+		pages: number;
 	}>(
 		`SELECT b.reference_code, b.title,
 		        (SELECT count(*)::int FROM archive_record r
 		          WHERE r.book_id = b.id
 		            AND EXISTS (SELECT 1 FROM record_revision v WHERE v.record_id = r.id AND v.status = 'published')
-		        ) AS published
+		         ) AS published,
+		        (SELECT count(DISTINCT l.image_id)::int FROM archive_record r
+		          JOIN LATERAL (SELECT id FROM record_revision WHERE record_id = r.id
+		            AND status = 'published' ORDER BY revision_number DESC LIMIT 1) v ON true
+		          JOIN record_revision_image l ON l.revision_id = v.id
+		          WHERE r.book_id = b.id) AS pages
 		 FROM book b ORDER BY b.reference_code NULLS LAST, b.title`,
 	);
 	const books = result.rows.map((row) => ({
 		referenceCode: row.reference_code,
 		title: row.title,
 		publishedRecords: row.published,
+		publishedPages: row.pages,
 	}));
 	return {
+		publishedPages: books.reduce((sum, book) => sum + book.publishedPages, 0),
 		publishedRecords: books.reduce((sum, book) => sum + book.publishedRecords, 0),
 		books,
 	};

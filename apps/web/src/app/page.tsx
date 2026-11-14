@@ -36,7 +36,7 @@ function Coverage({
 	catalogBooks: number | undefined;
 }) {
 	if (!coverage.ok) return <p role="alert">Cobertura indisponível: {coverage.error}</p>;
-	const { publishedRecords, books } = coverage.value;
+	const { publishedRecords, publishedPages, books } = coverage.value;
 	const withSeats = books.filter((book) => book.publishedRecords > 0).length;
 	if (publishedRecords === 0)
 		return (
@@ -50,7 +50,8 @@ function Coverage({
 			{publishedRecords} {publishedRecords === 1 ? "assento publicado" : "assentos publicados"} em{" "}
 			{withSeats} {withSeats === 1 ? "livro" : "livros"}
 			{catalogBooks === undefined ? "" : ` de ${catalogBooks} no catálogo`}. A cobertura é parcial:
-			só se pesquisa o que já foi revisto e publicado.
+			só se pesquisa o que já foi revisto e publicado. {publishedPages} páginas de manuscrito
+			associadas a assentos publicados; o total de páginas do acervo ainda não foi confirmado.
 		</p>
 	);
 }
@@ -119,8 +120,8 @@ export default async function Home({
 				<span className="eyebrow">Arquivo histórico · Vila Caiz</span>
 				<h1>Memória de Caiz</h1>
 				<p className="lead">
-					Pesquise os assentos paroquiais de Vila Caiz por nome, familiares, lugar, profissão ou
-					data. Cada resultado leva à fonte oficial.
+					Pesquise os assentos paroquiais de Vila Caiz por texto transcrito, nome, familiares,
+					lugar, profissão ou data. Cada resultado leva à fonte oficial.
 				</p>
 				<div className="coverage">
 					<Coverage coverage={coverage} catalogBooks={catalog.ok ? books.length : undefined} />

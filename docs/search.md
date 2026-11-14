@@ -8,7 +8,7 @@ What the public consultation does today. Product rules: `specs/arquivo-historico
 | Route | Purpose |
 |---|---|
 | `GET /search` | `q`, `type` (`baptism`/`marriage`/`death`/`undetermined`), `book` (catalog reference code), `from`/`to` (years), `page`, `pageSize` (default 20, max 50). Invalid input is 400. |
-| `GET /search/coverage` | Published seats per book; books without seats appear with 0. |
+| `GET /search/coverage` | Published seats and distinct linked manuscript images per book; books without seats appear with 0. |
 | `GET /records/:recordId` | One published seat; 404 when missing **or not published**. |
 
 - Only the latest `published` revision of a record is read. Drafts, validated-but-unpublished
@@ -17,8 +17,9 @@ What the public consultation does today. Product rules: `specs/arquivo-historico
 - `q` matches participants (names, relatives, role and notes such as profession), place and date
   (`1850`, `1850-03`, `12/03/1850`, the date as written). Every word must start some word of the
   record, compared with `normalizeSearchText` (accents, case, documented place variants). It is a
-  match, not proof of identity. The manuscript text (`originalText`) is **not** searched; that is
-  #87.
+  match, not proof of identity. The published manuscript text (`originalText`) is also searched, including names absent
+  from participant indexes. Punctuation separates words. Results include a bounded excerpt
+  centred on the first query word; the source spelling is preserved.
 - Type, book and period are filtered in SQL; the text comparison runs in memory over the
   published set because the PostgreSQL strategy (FTS/unaccent) still needs its ADR. Order is
   stable: date, then record id. A period filter excludes records without a year.
@@ -54,7 +55,22 @@ nenhuma transcrição real de óbitos validada. Não há percentagem mensurável
 
 Índices secundários em staging não são assentos pesquisáveis nem prova de validação.
 `undetermined` significa tipologia desconhecida, não demonstra uma quarta série.
-A pesquisa usa prefixos de palavras e comparação em memória; não pesquisa texto
-manuscrito nem identifica pessoas com certeza. O modo privado/investigador ainda
+A pesquisa usa prefixos de palavras e comparação em memória; pesquisa apenas texto manuscrito publicado e não identifica pessoas com certeza. O modo privado/investigador ainda
 não existe. Estas lacunas impedem considerar cumprida a predefinição privada da spec.
 Preparação operacional e ensaios reais: [runbook](operations/release.md).
+
+
+## Texto publicado e cobertura de páginas
+
+Os resultados e a ficha apresentam o excerto da revisão publicada, referência,
+localizador e ligações às imagens existentes. Uma revisão posterior em rascunho não
+altera o texto pesquisável. Não há confiança numérica editorial disponível: a UI
+indica explicitamente que não foi atribuída, sem reutilizar estimativas do modelo
+como confiança humana. Propostas pendentes não entram na pesquisa pública.
+
+`publishedPages` conta imagens distintas ligadas à última revisão publicada de
+cada assento, por livro. Não representa páginas processadas pelo modelo nem total
+de páginas do livro. Livros sem imagens publicadas contam zero. O denominador de
+páginas do acervo continua desconhecido, portanto não se calcula percentagem.
+
+Ver [evidência desta execução](readiness/pesquisa-vila-caiz-evidencia.md).

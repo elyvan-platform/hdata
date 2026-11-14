@@ -73,6 +73,9 @@ export const searchResultSchema = z.object({
 	recordId: z.uuid(),
 	recordType: recordTypeSchema,
 	status: validationStatusSchema,
+	/** Only text from the published revision; never an extraction proposal. */
+	originalText: z.string().nullable().default(null),
+	excerpt: z.string().nullable().default(null),
 	date: partialDateSchema.nullable(),
 	place: z.string().nullable(),
 	folio: z.string().nullable(),
@@ -101,11 +104,15 @@ export type SearchResponse = z.infer<typeof searchResponseSchema>;
 /** Real coverage: only what is published, per book; a book without seats is listed with zero. */
 export const coverageResponseSchema = z.object({
 	publishedRecords: z.number().int().nonnegative(),
+	/** Distinct manuscript images linked to published revisions, not series totals. */
+	publishedPages: z.number().int().nonnegative().default(0),
 	books: z.array(
 		z.object({
 			referenceCode: z.string().nullable(),
 			title: z.string(),
 			publishedRecords: z.number().int().nonnegative(),
+			/** Distinct manuscript images linked to published revisions, not series totals. */
+			publishedPages: z.number().int().nonnegative().default(0),
 		}),
 	),
 });

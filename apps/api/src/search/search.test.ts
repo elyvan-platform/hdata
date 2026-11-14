@@ -75,7 +75,9 @@ beforeAll(async () => {
 			externalId: `r-${n}`,
 			revision: {
 				recordType: "baptism",
-				originalText: "texto secreto do manuscrito",
+				originalText: publish
+					? "Compareceu, Eufrásia de Sousa; testemunha."
+					: "segredo apenas no rascunho",
 				provenance: { sourceId, method: "import", locator: `f. ${n}` },
 				participants: [{ role: "child", nameAsWritten: name, position: 0 }, ...participants],
 				...extra,
@@ -137,9 +139,15 @@ describe("search", () => {
 			expect((await search(`?q=${encodeURIComponent(q)}`)).total, q).toBe(1);
 	});
 
-	it("never exposes unpublished records or manuscript text", async () => {
+	it("searches published manuscript text and never exposes unpublished records", async () => {
 		expect((await search("?q=rascunho")).total).toBe(0);
-		expect((await search("?q=secreto")).total).toBe(0);
+		expect((await search("?q=!!!")).total).toBe(0);
+		expect((await search("?q=segredo")).total).toBe(0);
+		const found = await search("?q=eufrasia sousa");
+		expect(found.total).toBe(2);
+		expect(found.results[0]?.excerpt).toContain("Eufrásia de Sousa");
+		expect(found.results[0]?.images[0]?.url).toBe("https://example.org/i/1");
+		expect(found.results[0]?.participants.some((p) => p.name.includes("Eufrásia"))).toBe(false);
 		expect((await search("")).total).toBe(2);
 		expect((await app.inject(`/records/${records["João Rascunho"]}`)).statusCode).toBe(404);
 	});
@@ -172,9 +180,9 @@ describe("search", () => {
 		const coverage = (await app.inject("/search/coverage")).json();
 		expect(coverage.publishedRecords).toBe(2);
 		expect(coverage.books).toEqual([
-			{ referenceCode: "PT/1", title: "Livro PT/1", publishedRecords: 1 },
-			{ referenceCode: "PT/2", title: "Livro PT/2", publishedRecords: 1 },
-			{ referenceCode: "PT/3", title: "Livro PT/3", publishedRecords: 0 },
+			{ referenceCode: "PT/1", title: "Livro PT/1", publishedRecords: 1, publishedPages: 1 },
+			{ referenceCode: "PT/2", title: "Livro PT/2", publishedRecords: 1, publishedPages: 0 },
+			{ referenceCode: "PT/3", title: "Livro PT/3", publishedRecords: 0, publishedPages: 0 },
 		]);
 	});
 });
@@ -223,6 +231,7 @@ describe("release acceptance (synthetic)", () => {
 			referenceCode: "PT/3",
 			title: "Livro PT/3",
 			publishedRecords: 0,
+			publishedPages: 0,
 		});
 		const input = {
 			sourceId,
@@ -328,5 +337,38 @@ describe("release acceptance (synthetic)", () => {
 		} finally {
 			await server.close();
 		}
+	});
+});
+
+describe("published death transcription", () => {
+	it("finds a name absent from participants and isolates a later draft", async () => {
+		const { recordId, revisionId } = await importRecord(pool, {
+			sourceId,
+			bookId: books["PT/3"],
+			externalId: "death-transcription",
+			revision: {
+				recordType: "death",
+				originalText: `${"Texto introdutório. ".repeat(30)}Faleceu, Quitéria de Brito.`,
+				provenance: { sourceId, method: "import", locator: "m0006" },
+				participants: [],
+			},
+		});
+		await decide(pool, editor, recordId, "submit", { revisionId });
+		await decide(pool, reviewer, recordId, "validate", { revisionId });
+		await decide(pool, publisher, recordId, "publish", { revisionId });
+		const found = await search("?q=quiteria&type=death");
+		expect(found.total).toBe(1);
+		expect(found.results[0]).toMatchObject({ recordId, locator: "m0006", status: "published" });
+		expect(found.results[0]?.excerpt).toContain("Quitéria");
+		expect(found.results[0]?.excerpt?.length).toBeLessThanOrEqual(282);
+		const fiche = await getFiche(pool, editor, recordId);
+		expect(fiche).not.toBeNull();
+		if (!fiche) throw new Error("Missing fiche");
+		await editRevision(pool, editor, recordId, {
+			baseRevisionId: revisionId,
+			content: { ...fiche.current.content, originalText: "Nomeprivado" },
+		});
+		expect((await search("?q=nomeprivado")).total).toBe(0);
+		expect((await search("?q=quiteria&type=death")).total).toBe(1);
 	});
 });

@@ -11,6 +11,8 @@ const record: SearchResult = {
 	recordId: "00000000-0000-4000-8000-000000000001",
 	recordType: "death",
 	status: "published",
+	originalText: null,
+	excerpt: null,
 	date: null,
 	place: null,
 	folio: null,

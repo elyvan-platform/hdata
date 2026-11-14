@@ -25,7 +25,13 @@ export function RecordFacts({ record }: { record: SearchResult }) {
 				{record.origin.citation ? `. ${record.origin.citation}` : ""}
 			</dd>
 			<dt>Estado</dt>
-			<dd>Publicado</dd>
+			<dd>Publicado — revisto por humanos; confiança numérica não atribuída.</dd>
+			{record.excerpt && (
+				<>
+					<dt>Excerto da transcrição</dt>
+					<dd>{record.excerpt}</dd>
+				</>
+			)}
 		</dl>
 	);
 }
