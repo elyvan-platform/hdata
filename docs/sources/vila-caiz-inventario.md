@@ -1,5 +1,13 @@
 # Inventário de fontes — Vila Caiz (Amarante)
 
+Atualização de 2026-11-14: a página completa do tombo.pt foi recuperada via
+conector web e lista 39 livros (10 batismos, 14 casamentos, 15 óbitos), dos quais
+27 têm ligação a visualizador (8/9/10). Ver [evidência e listagem nominal](../readiness/catalogo-railway-evidencia.md).
+As contagens parciais 22/27 e os bloqueios abaixo são o registo da investigação
+anterior; não representam a contagem da página agora recuperada. A verificação
+individual dos 39 livros na fonte primária e as condições de reutilização continuam
+pendentes; apenas o fundo e um livro foram confirmados diretamente nesta atualização.
+
 - **Data da consulta:** 2026-11-14 (UTC)
 - **Âmbito:** documentos históricos com ligação comprovada à freguesia civil de Vila Caiz, concelho de Amarante (distrito do Porto), incluindo referências em fundos de outras localidades.
 - **Base:** fundo `PT/ADPRT/PRQ/PAMT38` (Paróquia de Vila Caiz, Arquivo Distrital do Porto).
