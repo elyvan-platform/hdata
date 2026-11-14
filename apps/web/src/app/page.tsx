@@ -4,6 +4,7 @@ import {
 	type CoverageResponse,
 	recordTypes,
 	type SearchQuery,
+	type SearchQueryInput,
 	type SearchResponse,
 	searchQuerySchema,
 } from "@hdata/domain";
@@ -12,6 +13,7 @@ import { describeError, recordTypeLabel, searchHref } from "../search/labels.ts"
 import { Participants } from "../search/participants.tsx";
 import { RecordFacts } from "../search/record-details.tsx";
 import { SourceLinks } from "../search/source-links.tsx";
+import { specimen } from "./specimen.ts";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +25,19 @@ async function attempt<T>(work: () => Promise<T>): Promise<Outcome<T>> {
 	} catch (error) {
 		return { ok: false, error: describeError(error) };
 	}
+}
+
+/** Filters in use, each with the query change that removes it. */
+function appliedFilters(query: SearchQuery) {
+	const filters: { label: string; clear: SearchQueryInput }[] = [];
+	if (query.type)
+		filters.push({ label: `Tipo: ${recordTypeLabel[query.type]}`, clear: { type: "" } });
+	if (query.book) filters.push({ label: `Livro: ${query.book}`, clear: { book: "" } });
+	if (query.from !== undefined)
+		filters.push({ label: `Do ano ${query.from}`, clear: { from: undefined } });
+	if (query.to !== undefined)
+		filters.push({ label: `Ao ano ${query.to}`, clear: { to: undefined } });
+	return filters;
 }
 
 const firstValue = (value: string | string[] | undefined) =>
@@ -113,67 +128,118 @@ export default async function Home({
 	]);
 	const books: CatalogBook[] = catalog.ok ? catalog.value.books : [];
 	const query = parsed.success ? parsed.data : undefined;
+	const applied = query ? appliedFilters(query) : [];
 
 	return (
 		<main id="conteudo">
 			<div className="hero">
-				<span className="eyebrow">Arquivo histórico · Vila Caiz</span>
-				<h1>Memória de Caiz</h1>
-				<p className="lead">
-					Pesquise os assentos paroquiais de Vila Caiz por texto transcrito, nome, familiares,
-					lugar, profissão ou data. Cada resultado leva à fonte oficial.
-				</p>
-				<div className="coverage">
-					<Coverage coverage={coverage} catalogBooks={catalog.ok ? books.length : undefined} />
-				</div>
-				<search>
-					<form className="search-form" method="get" action="/">
-						<div className="wide">
+				<div className="hero-content">
+					<span className="eyebrow">Arquivo histórico · Vila Caiz</span>
+					<h1>Memória de Caiz</h1>
+					<p className="lead">
+						Pesquise os assentos paroquiais de Vila Caiz por texto transcrito, nome, familiares,
+						lugar, profissão ou data. Cada resultado leva à fonte oficial.
+					</p>
+					<search>
+						<form className="search-form" method="get" action="/">
 							<label htmlFor="q">Nome, familiares, lugar, profissão ou data</label>
-							<input id="q" name="q" type="search" defaultValue={query?.q ?? ""} maxLength={200} />
-						</div>
-						<div>
-							<label htmlFor="type">Tipo</label>
-							<select id="type" name="type" defaultValue={query?.type ?? ""}>
-								<option value="">Todos</option>
-								{recordTypes.map((type) => (
-									<option key={type} value={type}>
-										{recordTypeLabel[type]}
-									</option>
-								))}
-							</select>
-						</div>
-						<div>
-							<label htmlFor="book">Livro</label>
-							<select id="book" name="book" defaultValue={query?.book ?? ""} disabled={!catalog.ok}>
-								<option value="">Todos</option>
-								{books.map((book) => (
-									<option key={book.referenceCode} value={book.referenceCode}>
-										{book.referenceCode} — {book.title}
-									</option>
-								))}
-							</select>
-						</div>
-						<div>
-							<label htmlFor="from">Do ano</label>
-							<input
-								id="from"
-								name="from"
-								type="number"
-								min={1}
-								max={9999}
-								defaultValue={query?.from}
-							/>
-						</div>
-						<div>
-							<label htmlFor="to">Ao ano</label>
-							<input id="to" name="to" type="number" min={1} max={9999} defaultValue={query?.to} />
-						</div>
-						<div>
-							<button type="submit">Pesquisar</button>
-						</div>
-					</form>
-				</search>
+							<div className="search-row">
+								<input
+									id="q"
+									name="q"
+									type="search"
+									defaultValue={query?.q ?? ""}
+									maxLength={200}
+								/>
+								<button type="submit">Pesquisar</button>
+							</div>
+							<details className="more-filters" open={applied.length > 0}>
+								<summary>Mais filtros</summary>
+								<div className="filter-grid">
+									<div>
+										<label htmlFor="type">Tipo</label>
+										<select id="type" name="type" defaultValue={query?.type ?? ""}>
+											<option value="">Todos</option>
+											{recordTypes.map((type) => (
+												<option key={type} value={type}>
+													{recordTypeLabel[type]}
+												</option>
+											))}
+										</select>
+									</div>
+									<div>
+										<label htmlFor="book">Livro</label>
+										<select
+											id="book"
+											name="book"
+											defaultValue={query?.book ?? ""}
+											disabled={!catalog.ok}
+										>
+											<option value="">Todos</option>
+											{books.map((book) => (
+												<option key={book.referenceCode} value={book.referenceCode}>
+													{book.referenceCode} — {book.title}
+												</option>
+											))}
+										</select>
+									</div>
+									<div>
+										<label htmlFor="from">Do ano</label>
+										<input
+											id="from"
+											name="from"
+											type="number"
+											min={1}
+											max={9999}
+											defaultValue={query?.from}
+										/>
+									</div>
+									<div>
+										<label htmlFor="to">Ao ano</label>
+										<input
+											id="to"
+											name="to"
+											type="number"
+											min={1}
+											max={9999}
+											defaultValue={query?.to}
+										/>
+									</div>
+								</div>
+							</details>
+						</form>
+					</search>
+					{query && applied.length > 0 && (
+						<ul className="applied-filters" aria-label="Filtros aplicados">
+							{applied.map((filter) => (
+								<li key={filter.label}>
+									<a href={searchHref({ ...query, ...filter.clear, page: undefined })}>
+										{filter.label}
+										<span className="sr-only"> — remover filtro</span>
+										<span aria-hidden="true"> ×</span>
+									</a>
+								</li>
+							))}
+						</ul>
+					)}
+					<div className="coverage">
+						<Coverage coverage={coverage} catalogBooks={catalog.ok ? books.length : undefined} />
+					</div>
+				</div>
+				{specimen && (
+					<figure className="specimen">
+						<img
+							src={specimen.src}
+							width={specimen.width}
+							height={specimen.height}
+							alt={specimen.alt}
+						/>
+						<figcaption>
+							{specimen.reference} · <a href={specimen.sourceUrl}>Ver a fonte</a>
+							<span className="muted"> · {specimen.rights}</span>
+						</figcaption>
+					</figure>
+				)}
 			</div>
 			{!catalog.ok && (
 				<p role="alert">
