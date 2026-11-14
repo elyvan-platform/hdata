@@ -1,1 +1,153 @@
-aW1wb3J0IHsgdHlwZSBDYXRhbG9nRXJyb3JDb2RlLCB0eXBlIENhdGFsb2dTbmFwc2hvdCwgY2F0YWxvZ1NuYXBzaG90U2NoZW1hIH0gZnJvbSAiQGhkYXRhL2RvbWFpbiI7CgppbXBvcnQgeyB6IH0gZnJvbSAiem9kIjsKCmV4cG9ydCBjbGFzcyBDYXRhbG9nRXJyb3IgZXh0ZW5kcyBFcnJvciB7CglyZWFkb25seSBjb2RlOiBDYXRhbG9nRXJyb3JDb2RlOwoKCWNvbnN0cnVjdG9yKGNvZGU6IENhdGFsb2dFcnJvckNvZGUsIG1lc3NhZ2U6IHN0cmluZywgb3B0aW9ucz86IHsgY2F1c2U/OiB1bmtub3duIH0pIHsKCQlzdXBlcihtZXNzYWdlLCBvcHRpb25zKTsKCQl0aGlzLm5hbWUgPSAiQ2F0YWxvZ0Vycm9yIjsKCQl0aGlzLmNvZGUgPSBjb2RlOwoJfQp9CgpleHBvcnQgdHlwZSBBZGFwdGVyT3B0aW9ucyA9IHsKCXVybDogc3RyaW5nOwoJZm9uZHNSZWZlcmVuY2U6IHN0cmluZzsKCXRpbWVvdXRNczogbnVtYmVyOwoJLyoqIEV4dHJhIGF0dGVtcHRzLCB1c2VkIG9ubHkgZm9yIHRyYW5zaWVudCBmYWlsdXJlcyAodGltZW91dCwgbmV0d29yaywgNXh4KS4gKi8KCXJldHJpZXM/OiBudW1iZXI7CglmZXRjaD86IHR5cGVvZiBmZXRjaDsKfTsKCmNvbnN0IHRyYW5zaWVudDogcmVhZG9ubHkgQ2F0YWxvZ0Vycm9yQ29kZVtdID0gWyJ0aW1lb3V0IiwgIm5ldHdvcmsiLCAiaHR0cF9lcnJvciJdOwoKYXN5bmMgZnVuY3Rpb24gZmV0Y2hPbmNlKG9wdGlvbnM6IEFkYXB0ZXJPcHRpb25zKTogUHJvbWlzZTx1bmtub3duPiB7Cgljb25zdCBkb0ZldGNoID0gb3B0aW9ucy5mZXRjaCA/PyBmZXRjaDsKCWxldCByZXNwb25zZTogUmVzcG9uc2U7Cgl0cnkgewoJCXJlc3BvbnNlID0gYXdhaXQgZG9GZXRjaChvcHRpb25zLnVybCwgewoJCQloZWFkZXJzOiB7IGFjY2VwdDogImFwcGxpY2F0aW9uL2pzb24iIH0sCgkJCXNpZ25hbDogQWJvcnRTaWduYWwudGltZW91dChvcHRpb25zLnRpbWVvdXRNcyksCgkJfSk7Cgl9IGNhdGNoIChlcnJvcikgewoJCWlmIChlcnJvciBpbnN0YW5jZW9mIEVycm9yICYmIChlcnJvci5uYW1lID09PSAiVGltZW91dEVycm9yIiB8fCBlcnJvci5uYW1lID09PSAiQWJvcnRFcnJvciIpKQoJCQl0aHJvdyBuZXcgQ2F0YWxvZ0Vycm9yKCJ0aW1lb3V0IiwgYE5vIGFuc3dlciB3aXRoaW4gJHtvcHRpb25zLnRpbWVvdXRNc30gbXNgLCB7CgkJCQljYXVzZTogZXJyb3IsCgkJCX0pOwoJCXRocm93IG5ldyBDYXRhbG9nRXJyb3IoIm5ldHdvcmsiLCAiQ291bGQgbm90IHJlYWNoIHRoZSBjYXRhbG9nIChETlMsIFRMUyBvciBjb25uZWN0aW9uKSIsIHsKCQkJY2F1c2U6IGVycm9yLAoJCX0pOwoJfQoJaWYgKHJlc3BvbnNlLnN0YXR1cyA9PT0gNDI5KQoJCXRocm93IG5ldyBDYXRhbG9nRXJyb3IoInJhdGVfbGltaXRlZCIsICJUaGUgY2F0YWxvZyBpcyBsaW1pdGluZyByZXF1ZXN0cyAoSFRUUCA0MjkpIik7CglpZiAocmVzcG9uc2Uuc3RhdHVzID09PSA0MDEgfHwgcmVzcG9uc2Uuc3RhdHVzID09PSA0MDMpCgkJdGhyb3cgbmV3IENhdGFsb2dFcnJvcigicmVmdXNlZCIsIGBUaGUgY2F0YWxvZyByZWZ1c2VkIHRoZSByZXF1ZXN0IChIVFRQICR7cmVzcG9uc2Uuc3RhdHVzfSlgKTsKCWlmICghcmVzcG9uc2Uub2spCgkJdGhyb3cgbmV3IENhdGFsb2dFcnJvcigiaHR0cF9lcnJvciIsIGBUaGUgY2F0YWxvZyBhbnN3ZXJlZCBIVFRQICR7cmVzcG9uc2Uuc3RhdHVzfWApOwoJdHJ5IHsKCQlyZXR1cm4gYXdhaXQgcmVzcG9uc2UuanNvbigpOwoJfSBjYXRjaCAoZXJyb3IpIHsKCQl0aHJvdyBuZXcgQ2F0YWxvZ0Vycm9yKCJpbnZhbGlkX2Zvcm1hdCIsICJUaGUgY2F0YWxvZyByZXNwb25zZSBpcyBub3QgdmFsaWQgSlNPTiIsIHsKCQkJY2F1c2U6IGVycm9yLAoJCX0pOwoJfQp9Cgpjb25zdCByZWZlcmVuY2VTY2hlbWEgPSB6Lm9iamVjdCh7IHZhbHVlOiB6LnN0cmluZygpLm1pbigxKSB9KTsKY29uc3QgdGl0bGVTY2hlbWEgPSB6LmFycmF5KHJlZmVyZW5jZVNjaGVtYSk7CmNvbnN0IGRpZ2l0YXJxQm9va1NjaGVtYSA9IHoub2JqZWN0KHsKCWlkOiB6LnN0cmluZygpLnJlZ2V4KC9eW2EtZjAtOV17MzJ9JC9pKSwKCXJlZmVyZW5jZUNvZGU6IHJlZmVyZW5jZVNjaGVtYSwKCXRpdGxlczogdGl0bGVTY2hlbWEubWluKDEpLAoJaGFzSW1hZ2VzOiB6LmJvb2xlYW4oKSwKfSk7CgpmdW5jdGlvbiBjaGlsZHJlblNjaGVtYTxUIGV4dGVuZHMgei5ab2RUeXBlPihlbnRyeTogVCkgewoJcmV0dXJuIHoub2JqZWN0KHsgdG90YWw6IHoubnVtYmVyKCkuaW50KCkubm9ubmVnYXRpdmUoKSwgcmVzdWx0czogei5hcnJheShlbnRyeSkgfSk7Cn0KCmNvbnN0IGRpZ2l0YXJxRm9uZHNTY2hlbWEgPSB6Lm9iamVjdCh7CglyZWZlcmVuY2VDb2RlOiByZWZlcmVuY2VTY2hlbWEsCgl0aXRsZXM6IHRpdGxlU2NoZW1hLAoJY2hpbGRyZW46IGNoaWxkcmVuU2NoZW1hKAoJCXoub2JqZWN0KHsgcmVmZXJlbmNlQ29kZTogcmVmZXJlbmNlU2NoZW1hLCBjaGlsZHJlbjogY2hpbGRyZW5TY2hlbWEoZGlnaXRhcnFCb29rU2NoZW1hKSB9KSwKCSksCn0pOwoKZnVuY3Rpb24gbm9ybWFsaXplRGlnaXRhcnFGb25kcyhib2R5OiB1bmtub3duKTogdW5rbm93biB7Cgljb25zdCBwYXJzZWQgPSBkaWdpdGFycUZvbmRzU2NoZW1hLnNhZmVQYXJzZShib2R5KTsKCWlmICghcGFyc2VkLnN1Y2Nlc3MpIHJldHVybiBib2R5OwoKCWNvbnN0IGZvbmRzID0gcGFyc2VkLmRhdGE7Cgljb25zdCBzZXJpZXMgPSBmb25kcy5jaGlsZHJlbi5yZXN1bHRzOwoJaWYgKAoJCXNlcmllcy5sZW5ndGggIT09IGZvbmRzLmNoaWxkcmVuLnRvdGFsIHx8CgkJc2VyaWVzLnNvbWUoKHsgY2hpbGRyZW4gfSkgPT4gY2hpbGRyZW4ucmVzdWx0cy5sZW5ndGggIT09IGNoaWxkcmVuLnRvdGFsKQoJKSB7CgkJdGhyb3cgbmV3IENhdGFsb2dFcnJvcigiaW5jb21wbGV0ZSIsICJEaWdpdGFycSByZXR1cm5lZCBhIHBhcnRpYWwgZm9uZHMgaGllcmFyY2h5Iik7Cgl9CgoJY29uc3Qgb3JpZ2luID0gImh0dHBzOi8vZGlnaXRhcnEuYXJxdWl2b3MucHQiOwoJcmV0dXJuIHsKCQlmb25kc1JlZmVyZW5jZTogZm9uZHMucmVmZXJlbmNlQ29kZS52YWx1ZSwKCQl0aXRsZTogZm9uZHMudGl0bGVzWzBdPy52YWx1ZSwKCQlleHBlY3RlZEJvb2tDb3VudDogc2VyaWVzLnJlZHVjZSgodG90YWwsIGVudHJ5KSA9PiB0b3RhbCArIGVudHJ5LmNoaWxkcmVuLnRvdGFsLCAwKSwKCQlib29rczogc2VyaWVzLmZsYXRNYXAoKGVudHJ5KSA9PgoJCQllbnRyeS5jaGlsZHJlbi5yZXN1bHRzLm1hcCgoYm9vaykgPT4gKHsKCQkJCXJlZmVyZW5jZUNvZGU6IGJvb2sucmVmZXJlbmNlQ29kZS52YWx1ZSwKCQkJCXRpdGxlOiBib29rLnRpdGxlc1swXT8udmFsdWUsCgkJCQlyZWNvcmRVcmw6IGAke29yaWdpbn0vZG9jdW1lbnREZXRhaWxzLyR7Ym9vay5pZH1gLAoJCQkJdmlld2VyVXJsOiBib29rLmhhc0ltYWdlcwoJCQkJCT8gYCR7b3JpZ2lufS9maWxlVmlld2VyLyR7Ym9vay5pZH0/aXNSZXByZXNlbnRhdGlvbj1mYWxzZWAKCQkJCQk6IHVuZGVmaW5lZCwKCQkJfSkpLAoJCSksCgl9Owp9CgovKiogQ2hlY2tzIHRoYXQgYSBwYXJzZWQgc25hcHNob3QgaXMgdGhlIGNvbXBsZXRlIGNhdGFsb2cgb2YgdGhlIGV4cGVjdGVkIGZvbmRzLiAqLwpleHBvcnQgZnVuY3Rpb24gdmFsaWRhdGVTbmFwc2hvdChib2R5OiB1bmtub3duLCBmb25kc1JlZmVyZW5jZTogc3RyaW5nKTogQ2F0YWxvZ1NuYXBzaG90IHsKCWNvbnN0IHBhcnNlZCA9IGNhdGFsb2dTbmFwc2hvdFNjaGVtYS5zYWZlUGFyc2Uobm9ybWFsaXplRGlnaXRhcnFGb25kcyhib2R5KSk7CglpZiAoIXBhcnNlZC5zdWNjZXNzKQoJCXRocm93IG5ldyBDYXRhbG9nRXJyb3IoImludmFsaWRfZm9ybWF0IiwgIlRoZSBjYXRhbG9nIHJlc3BvbnNlIGhhcyBhbiB1bmV4cGVjdGVkIHNoYXBlIiwgewoJCQljYXVzZTogcGFyc2VkLmVycm9yLAoJCX0pOwoJY29uc3Qgc25hcHNob3QgPSBwYXJzZWQuZGF0YTsKCWlmIChzbmFwc2hvdC5mb25kc1JlZmVyZW5jZSAhPT0gZm9uZHNSZWZlcmVuY2UpCgkJdGhyb3cgbmV3IENhdGFsb2dFcnJvcigKCQkJImludmFsaWRfZm9ybWF0IiwKCQkJYFJlc3BvbnNlIGlzIGZvciBmb25kcyAke3NuYXBzaG90LmZvbmRzUmVmZXJlbmNlfSwgZXhwZWN0ZWQgJHtmb25kc1JlZmVyZW5jZX1gLAoJCSk7CglpZiAoc25hcHNob3QuYm9va3MubGVuZ3RoID09PSAwIHx8IHNuYXBzaG90LmJvb2tzLmxlbmd0aCAhPT0gc25hcHNob3QuZXhwZWN0ZWRCb29rQ291bnQpCgkJdGhyb3cgbmV3IENhdGFsb2dFcnJvcigKCQkJImluY29tcGxldGUiLAoJCQlgUmVjZWl2ZWQgJHtzbmFwc2hvdC5ib29rcy5sZW5ndGh9IGJvb2tzLCB0aGUgc291cmNlIGFubm91bmNlcyAke3NuYXBzaG90LmV4cGVjdGVkQm9va0NvdW50fWAsCgkJKTsKCWNvbnN0IHNlZW4gPSBuZXcgU2V0PHN0cmluZz4oKTsKCWZvciAoY29uc3QgYm9vayBvZiBzbmFwc2hvdC5ib29rcykgewoJCWlmICghYm9vay5yZWZlcmVuY2VDb2RlLnN0YXJ0c1dpdGgoYCR7Zm9uZHNSZWZlcmVuY2V9L2ApKQoJCQl0aHJvdyBuZXcgQ2F0YWxvZ0Vycm9yKAoJCQkJImludmFsaWRfZm9ybWF0IiwKCQkJCWBCb29rICR7Ym9vay5yZWZlcmVuY2VDb2RlfSBkb2VzIG5vdCBiZWxvbmcgdG8gJHtmb25kc1JlZmVyZW5jZX1gLAoJCQkpOwoJCWlmIChzZWVuLmhhcyhib29rLnJlZmVyZW5jZUNvZGUpKQoJCQl0aHJvdyBuZXcgQ2F0YWxvZ0Vycm9yKCJpbnZhbGlkX2Zvcm1hdCIsIGBEdXBsaWNhdGUgcmVmZXJlbmNlICR7Ym9vay5yZWZlcmVuY2VDb2RlfWApOwoJCXNlZW4uYWRkKGJvb2sucmVmZXJlbmNlQ29kZSk7Cgl9CglyZXR1cm4gc25hcHNob3Q7Cn0KCi8qKiBGZXRjaGVzIGFuZCB2YWxpZGF0ZXMgdGhlIHdob2xlIGNhdGFsb2c7IGFueSBmYWlsdXJlIHRocm93cyBhIGBDYXRhbG9nRXJyb3JgLiAqLwpleHBvcnQgYXN5bmMgZnVuY3Rpb24gZmV0Y2hDYXRhbG9nKG9wdGlvbnM6IEFkYXB0ZXJPcHRpb25zKTogUHJvbWlzZTxDYXRhbG9nU25hcHNob3Q+IHsKCWNvbnN0IGF0dGVtcHRzID0gKG9wdGlvbnMucmV0cmllcyA/PyAxKSArIDE7Cglmb3IgKGxldCBhdHRlbXB0ID0gMTsgOyBhdHRlbXB0KyspIHsKCQl0cnkgewoJCQlyZXR1cm4gdmFsaWRhdGVTbmFwc2hvdChhd2FpdCBmZXRjaE9uY2Uob3B0aW9ucyksIG9wdGlvbnMuZm9uZHNSZWZlcmVuY2UpOwoJCX0gY2F0Y2ggKGVycm9yKSB7CgkJCWlmICghKGVycm9yIGluc3RhbmNlb2YgQ2F0YWxvZ0Vycm9yKSkgdGhyb3cgZXJyb3I7CgkJCWlmIChhdHRlbXB0ID49IGF0dGVtcHRzIHx8ICF0cmFuc2llbnQuaW5jbHVkZXMoZXJyb3IuY29kZSkpIHRocm93IGVycm9yOwoJCX0KCX0KfQo=
+import { type CatalogErrorCode, type CatalogSnapshot, catalogSnapshotSchema } from "@hdata/domain";
+
+import { z } from "zod";
+
+export class CatalogError extends Error {
+	readonly code: CatalogErrorCode;
+
+	constructor(code: CatalogErrorCode, message: string, options?: { cause?: unknown }) {
+		super(message, options);
+		this.name = "CatalogError";
+		this.code = code;
+	}
+}
+
+export type AdapterOptions = {
+	url: string;
+	fondsReference: string;
+	timeoutMs: number;
+	/** Extra attempts, used only for transient failures (timeout, network, 5xx). */
+	retries?: number;
+	fetch?: typeof fetch;
+};
+
+const transient: readonly CatalogErrorCode[] = ["timeout", "network", "http_error"];
+
+async function fetchOnce(options: AdapterOptions): Promise<unknown> {
+	const doFetch = options.fetch ?? fetch;
+	let response: Response;
+	try {
+		response = await doFetch(options.url, {
+			headers: { accept: "application/json" },
+			signal: AbortSignal.timeout(options.timeoutMs),
+		});
+	} catch (error) {
+		if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError"))
+			throw new CatalogError("timeout", `No answer within ${options.timeoutMs} ms`, {
+				cause: error,
+			});
+		throw new CatalogError("network", "Could not reach the catalog (DNS, TLS or connection)", {
+			cause: error,
+		});
+	}
+	if (response.status === 429)
+		throw new CatalogError("rate_limited", "The catalog is limiting requests (HTTP 429)");
+	if (response.status === 401 || response.status === 403)
+		throw new CatalogError("refused", `The catalog refused the request (HTTP ${response.status})`);
+	if (!response.ok)
+		throw new CatalogError("http_error", `The catalog answered HTTP ${response.status}`);
+	try {
+		return await response.json();
+	} catch (error) {
+		throw new CatalogError("invalid_format", "The catalog response is not valid JSON", {
+			cause: error,
+		});
+	}
+}
+
+const referenceSchema = z.object({ value: z.string().min(1) });
+const titleSchema = z.array(referenceSchema);
+const digitarqBookSchema = z.object({
+	id: z.string().regex(/^[a-f0-9]{32}$/i),
+	referenceCode: referenceSchema,
+	titles: titleSchema.min(1),
+	hasImages: z.boolean(),
+});
+
+function childrenSchema<T extends z.ZodType>(entry: T) {
+	return z.object({ total: z.number().int().nonnegative(), results: z.array(entry) });
+}
+
+const digitarqFondsSchema = z.object({
+	referenceCode: referenceSchema,
+	titles: titleSchema,
+	children: childrenSchema(
+		z.object({ referenceCode: referenceSchema, children: childrenSchema(digitarqBookSchema) }),
+	),
+});
+
+function normalizeDigitarqFonds(body: unknown): unknown {
+	const parsed = digitarqFondsSchema.safeParse(body);
+	if (!parsed.success) return body;
+
+	const fonds = parsed.data;
+	const series = fonds.children.results;
+	if (
+		series.length !== fonds.children.total ||
+		series.some(({ children }) => children.results.length !== children.total)
+	) {
+		throw new CatalogError("incomplete", "Digitarq returned a partial fonds hierarchy");
+	}
+
+	const origin = "https://digitarq.arquivos.pt";
+	return {
+		fondsReference: fonds.referenceCode.value,
+		title: fonds.titles[0]?.value,
+		expectedBookCount: series.reduce((total, entry) => total + entry.children.total, 0),
+		books: series.flatMap((entry) =>
+			entry.children.results.map((book) => ({
+				referenceCode: book.referenceCode.value,
+				title: book.titles[0]?.value,
+				recordUrl: `${origin}/documentDetails/${book.id}`,
+				viewerUrl: book.hasImages
+					? `${origin}/fileViewer/${book.id}?isRepresentation=false`
+					: undefined,
+			})),
+		),
+	};
+}
+
+/** Checks that a parsed snapshot is the complete catalog of the expected fonds. */
+export function validateSnapshot(body: unknown, fondsReference: string): CatalogSnapshot {
+	const parsed = catalogSnapshotSchema.safeParse(normalizeDigitarqFonds(body));
+	if (!parsed.success)
+		throw new CatalogError("invalid_format", "The catalog response has an unexpected shape", {
+			cause: parsed.error,
+		});
+	const snapshot = parsed.data;
+	if (snapshot.fondsReference !== fondsReference)
+		throw new CatalogError(
+			"invalid_format",
+			`Response is for fonds ${snapshot.fondsReference}, expected ${fondsReference}`,
+		);
+	if (snapshot.books.length === 0 || snapshot.books.length !== snapshot.expectedBookCount)
+		throw new CatalogError(
+			"incomplete",
+			`Received ${snapshot.books.length} books, the source announces ${snapshot.expectedBookCount}`,
+		);
+	const seen = new Set<string>();
+	for (const book of snapshot.books) {
+		if (!book.referenceCode.startsWith(`${fondsReference}/`))
+			throw new CatalogError(
+				"invalid_format",
+				`Book ${book.referenceCode} does not belong to ${fondsReference}`,
+			);
+		if (seen.has(book.referenceCode))
+			throw new CatalogError("invalid_format", `Duplicate reference ${book.referenceCode}`);
+		seen.add(book.referenceCode);
+	}
+	return snapshot;
+}
+
+/** Fetches and validates the whole catalog; any failure throws a `CatalogError`. */
+export async function fetchCatalog(options: AdapterOptions): Promise<CatalogSnapshot> {
+	const attempts = (options.retries ?? 1) + 1;
+	for (let attempt = 1; ; attempt++) {
+		try {
+			return validateSnapshot(await fetchOnce(options), options.fondsReference);
+		} catch (error) {
+			if (!(error instanceof CatalogError)) throw error;
+			if (attempt >= attempts || !transient.includes(error.code)) throw error;
+		}
+	}
+}
