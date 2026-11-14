@@ -19,3 +19,5 @@ export const versionResponseSchema = z.object({
 	commit: z.string().min(1).optional(),
 });
 export type VersionResponse = z.infer<typeof versionResponseSchema>;
+
+export * from "./archive.ts";

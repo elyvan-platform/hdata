@@ -22,6 +22,7 @@
 		"zod": "catalog:"
 	},
 	"devDependencies": {
+		"@electric-sql/pglite": "catalog:",
 		"@hdata/config": "workspace:*",
 		"@types/node": "catalog:",
 		"@types/pg": "catalog:",
