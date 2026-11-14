@@ -19,6 +19,9 @@ import {
 
 export const defaultMaxAttempts = 3;
 
+// Longer than the supported image + model timeouts; expired attempts are fenced below.
+export const extractionLeaseSeconds = 1500;
+
 export type ExtractionRun = {
 	id: string;
 	status: "queued" | "running" | "succeeded" | "failed";
@@ -37,6 +40,12 @@ export async function requestExtraction(
 	pool: Pool,
 	input: { imageId: string; provider: ModelProvider; maxAttempts?: number },
 ): Promise<ExtractionRun> {
+	if (
+		!Number.isInteger(input.maxAttempts ?? defaultMaxAttempts) ||
+		(input.maxAttempts ?? defaultMaxAttempts) < 1 ||
+		(input.maxAttempts ?? defaultMaxAttempts) > 10
+	)
+		throw new Error("maxAttempts must be between 1 and 10");
 	const image = await pool.query<{ source_id: string }>(
 		"SELECT source_id FROM image_ref WHERE id=$1",
 		[input.imageId],
@@ -79,6 +88,12 @@ export async function processExtraction(
 	runId: string,
 	deps: { provider: ModelProvider; loadImage: ImageLoader },
 ): Promise<ExtractionRun> {
+	await pool.query(
+		`UPDATE extraction_run SET status='failed', error_code='lease_exhausted',
+		 error_message='Worker stopped during final attempt', finished_at=now()
+		 WHERE id=$1 AND status='running' AND lease_until<now() AND attempts>=max_attempts`,
+		[runId],
+	);
 	const claimed = await pool.query<{
 		image_id: string;
 		url: string | null;
@@ -86,11 +101,12 @@ export async function processExtraction(
 		attempts: number;
 		max_attempts: number;
 	}>(
-		`UPDATE extraction_run r SET status='running', attempts=attempts+1
+		`UPDATE extraction_run r SET status='running', attempts=attempts+1, lease_until=now()+interval '1500 seconds'
 		 FROM image_ref i
-		 WHERE r.id=$1 AND i.id=r.image_id AND r.status='queued' AND r.attempts<r.max_attempts
+		 WHERE r.id=$1 AND i.id=r.image_id AND (r.status='queued' OR (r.status='running' AND r.lease_until<now())) AND r.attempts<r.max_attempts
+		 AND r.model=$2 AND r.model_version=$3 AND r.prompt_version=$4
 		 RETURNING r.image_id, i.url, i.storage_key, r.attempts, r.max_attempts`,
-		[runId],
+		[runId, deps.provider.model, deps.provider.version, deps.provider.promptVersion],
 	);
 	const claim = claimed.rows[0];
 	if (!claim) {
@@ -105,6 +121,16 @@ export async function processExtraction(
 	}
 	let imageSha: string | null = null;
 	try {
+		const rights = await pool.query<{ allowed: boolean }>(
+			`SELECT (i.rights_status='authorized' AND s.rights_status='authorized') AS allowed
+			 FROM image_ref i JOIN source s ON s.id=i.source_id WHERE i.id=$1`,
+			[claim.image_id],
+		);
+		if (!rights.rows[0]?.allowed)
+			throw new PermanentExtractionError(
+				"rights_unknown",
+				"Image and source must authorize external processing",
+			);
 		const image = await deps.loadImage({ url: claim.url, storageKey: claim.storage_key });
 		imageSha = image.sha256;
 		const parsed = modelOutputSchema.safeParse(await deps.provider.extract(image));
@@ -113,7 +139,7 @@ export async function processExtraction(
 				"model_output",
 				parsed.error.issues[0]?.message ?? "invalid",
 			);
-		await storeProposals(pool, runId, image.sha256, parsed.data.seats);
+		await storeProposals(pool, runId, claim.attempts, image.sha256, parsed.data.seats);
 		return {
 			id: runId,
 			status: "succeeded",
@@ -130,13 +156,14 @@ export async function processExtraction(
 		const final = permanent || exhausted;
 		await pool.query(
 			`UPDATE extraction_run SET status=$2, error_code=$3, error_message=$4, image_sha256=COALESCE($5,image_sha256),
-			 finished_at=CASE WHEN $2='failed' THEN now() END WHERE id=$1`,
+			 finished_at=CASE WHEN $2='failed' THEN now() END, lease_until=NULL WHERE id=$1 AND attempts=$6 AND status='running'`,
 			[
 				runId,
 				final ? "failed" : "queued",
 				code,
 				String(error instanceof Error ? error.message : error).slice(0, 500),
 				imageSha,
+				claim.attempts,
 			],
 		);
 		if (final && permanent)
@@ -150,10 +177,21 @@ export async function processExtraction(
 	}
 }
 
-async function storeProposals(pool: Pool, runId: string, imageSha: string, seats: ProposedSeat[]) {
+async function storeProposals(
+	pool: Pool,
+	runId: string,
+	attempt: number,
+	imageSha: string,
+	seats: ProposedSeat[],
+) {
 	const client = await pool.connect();
 	try {
 		await client.query("BEGIN");
+		const owner = await client.query(
+			"SELECT id FROM extraction_run WHERE id=$1 AND attempts=$2 AND status='running' FOR UPDATE",
+			[runId, attempt],
+		);
+		if (!owner.rows.length) throw new Error("Extraction lease superseded");
 		for (const [ordinal, seat] of seats.entries()) {
 			await client.query(
 				`INSERT INTO extraction_proposal (run_id,ordinal,region,content,confidence,has_illegible)
@@ -169,7 +207,7 @@ async function storeProposals(pool: Pool, runId: string, imageSha: string, seats
 			);
 		}
 		await client.query(
-			"UPDATE extraction_run SET status='succeeded', image_sha256=$2, error_code=NULL, error_message=NULL, finished_at=now() WHERE id=$1",
+			"UPDATE extraction_run SET status='succeeded', image_sha256=$2, error_code=NULL, error_message=NULL, finished_at=now(), lease_until=NULL WHERE id=$1",
 			[runId, imageSha],
 		);
 		await client.query("COMMIT");

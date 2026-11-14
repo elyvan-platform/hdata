@@ -24,6 +24,6 @@ export * from "./archive.ts";
 export * from "./catalog.ts";
 export * from "./editorial.ts";
 export * from "./extraction.ts";
+export * from "./extraction-batch.ts";
 export * from "./historical-index.ts";
-
 export * from "./search.ts";

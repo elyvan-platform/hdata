@@ -195,3 +195,9 @@ publicação externa e alterações à configuração gerada apenas para documen
   spec ficam para as fases futuras. `node --version` no shell: v22.23.3, inferior
   ao Node 24 requerido; não se certifica aqui a execução em Node 24.
   `elyvan doctor` não foi validado: postinstall termina mesmo sem CLI disponível.
+
+- 2026-11-14 — Tarefa 11: executor de lotes sobre a extração existente, orçamento
+  persistente, direitos por fonte/imagem, retoma e export de propostas/revisão.
+  Manifesto e cobertura das oito entradas em `docs/sources/vila-caiz-lote.json` e
+  `vila-caiz-cobertura.json`. Não há páginas enumeradas/autorizadas: fases de
+  aquisição e medição real permanecem incompletas. Ver `../extraction-batch.md`.

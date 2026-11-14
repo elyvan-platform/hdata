@@ -294,6 +294,7 @@ export const extractionRuns = pgTable(
 		errorMessage: text("error_message"),
 		createdAt: createdAt(),
 		finishedAt: timestamp("finished_at", { withTimezone: true }),
+		leaseUntil: timestamp("lease_until", { withTimezone: true }),
 	},
 	(t) => [
 		unique("extraction_run_key_unique").on(t.idempotencyKey),
@@ -332,3 +333,11 @@ export const extractionProposals = pgTable(
 		),
 	],
 );
+
+// Conservative reservations are never refunded, including after a worker crash.
+export const extractionBatchBudgets = pgTable("extraction_batch_budget", {
+	id: text("id").primaryKey(),
+	manifestHash: text("manifest_hash").notNull(),
+	maxCalls: integer("max_calls").notNull(),
+	reservedCalls: integer("reserved_calls").notNull().default(0),
+});

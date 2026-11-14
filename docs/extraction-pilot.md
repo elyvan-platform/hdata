@@ -48,7 +48,9 @@ este documento não traz taxas de erro e nenhum número foi inventado. Procedime
   ligado à mão (`worker.ts`) e não foi exercitado contra PostgreSQL real (os testes usam PGlite e
   chamam `processExtraction` diretamente). Sem bloco de storage, só imagens com URL público são lidas
   (`storageKey` precisa de um `ImageLoader` próprio).
-- Enviar imagens a um serviço externo exige direitos conhecidos; o piloto não o verifica ainda.
+- O serviço verifica agora `source.rights_status` e `image_ref.rights_status`: ambos exigem
+  `authorized` para processamento externo; o lote exige também evidência no manifesto.
+  Ver [operação em lote](extraction-batch.md).
 - Sem rotas HTTP nem página para rever propostas: a revisão usa `reviewProposal`.
 - O prompt é único (`seats-v1`) e a região devolvida pelo modelo não é verificada.
 
