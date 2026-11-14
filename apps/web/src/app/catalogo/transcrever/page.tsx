@@ -19,16 +19,52 @@ const errors: Record<string, string> = {
 
 async function submit(previous: BatchState, form: FormData): Promise<BatchState> {
 	"use server";
-	const token = form.get("token");
+	const rawToken = form.get("token");
+	const token = typeof rawToken === "string" ? rawToken.trim() : "";
+	if (
+		token.length < 16 ||
+		token.length > 1024 ||
+		Array.from(token).some((character) => {
+			const code = character.charCodeAt(0);
+			return code < 33 || code === 127 || code > 255 || /\s/u.test(character);
+		})
+	)
+		return {
+			...previous,
+			message:
+				"Token inválido. Use o mesmo token de Atualizar catálogo, com pelo menos 16 caracteres e sem espaços.",
+		};
+
+	const enqueue = form.get("operation") === "enqueue";
+	const authorize = enqueue && form.get("authorize") === "on";
+	const evidence = form.get("rightsEvidence");
+	if (
+		authorize &&
+		(typeof evidence !== "string" || evidence.trim().length < 12 || evidence.trim().length > 1000)
+	)
+		return {
+			...previous,
+			message:
+				"Indique a referência da autorização (12 a 1000 caracteres) ou desmarque a confirmação se a autorização já estiver registada.",
+		};
+
 	const input = bookExtractionRequestSchema.safeParse({
 		book: form.get("book"),
 		first: form.get("first"),
 		limit: form.get("limit"),
-		enqueue: form.get("operation") === "enqueue",
-		rightsEvidence: form.get("authorize") === "on" ? form.get("rightsEvidence") : undefined,
+		enqueue,
+		rightsEvidence: authorize ? evidence : undefined,
 	});
-	if (!input.success || typeof token !== "string" || !/^[!-~]{16,1024}$/.test(token))
-		return { ...previous, message: "Indique o livro, o intervalo e o token de atualização." };
+	if (!input.success) {
+		const field = input.error.issues[0]?.path[0];
+		const message =
+			field === "book"
+				? "Selecione um livro."
+				: field === "first"
+					? "Indique uma primeira página válida (1 a 100 000)."
+					: "Indique um número de páginas entre 1 e 20.";
+		return { ...previous, message };
+	}
 	try {
 		const response = await fetch(`${getEnv().API_URL.replace(/\/+$/, "")}/catalog/extraction`, {
 			method: "POST",
