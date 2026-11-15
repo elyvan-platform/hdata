@@ -38,7 +38,7 @@ export function idempotencyKey(imageId: string, provider: ModelProvider): string
 /** Creates the run for image + model + version + prompt, or returns the existing one. */
 export async function requestExtraction(
 	pool: Pool,
-	input: { imageId: string; provider: ModelProvider; maxAttempts?: number },
+	input: { imageId: string; provider: ModelProvider; maxAttempts?: number; retryFailed?: boolean },
 ): Promise<ExtractionRun> {
 	if (
 		!Number.isInteger(input.maxAttempts ?? defaultMaxAttempts) ||
@@ -65,6 +65,14 @@ export async function requestExtraction(
 			input.maxAttempts ?? defaultMaxAttempts,
 		],
 	);
+	if (input.retryFailed) {
+		await pool.query(
+			`UPDATE extraction_run SET status='queued', attempts=0, error_code=NULL,
+			 error_message=NULL, finished_at=NULL, lease_until=NULL
+			 WHERE idempotency_key=$1 AND status='failed'`,
+			[idempotencyKey(input.imageId, input.provider)],
+		);
+	}
 	const run = await pool.query<{
 		id: string;
 		status: ExtractionRun["status"];
@@ -136,8 +144,8 @@ export async function processExtraction(
 		const parsed = modelOutputSchema.safeParse(await deps.provider.extract(image));
 		if (!parsed.success)
 			throw new PermanentExtractionError(
-				"model_output",
-				parsed.error.issues[0]?.message ?? "invalid",
+				"model_schema",
+				parsed.error.issues[0]?.path.join(".") || "Invalid response fields",
 			);
 		await storeProposals(pool, runId, claim.attempts, image.sha256, parsed.data.seats);
 		return {

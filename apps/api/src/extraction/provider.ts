@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { illegibleMarker } from "@hdata/domain";
+import { illegibleMarker, modelOutputSchema } from "@hdata/domain";
 import sharp from "sharp";
 import { z } from "zod";
 
@@ -95,17 +95,33 @@ export function createUrlImageLoader(options: { timeoutMs: number; fetch?: typeo
 	return loader;
 }
 
-export const promptVersion = "seats-v1";
+export const promptVersion = "seats-v2";
 
 const systemPrompt = `Transcreve assentos paroquiais manuscritos (português, séculos XVI–XIX).
 Regras: mantém a grafia original, sem modernizar nem expandir abreviaturas; um item por assento, pela ordem da página;
 escreve ${illegibleMarker} no lugar de qualquer palavra que não consigas ler com segurança e nunca adivinhes;
 para cada campo indica "confidence" entre 0 e 1 (a tua estimativa, não uma probabilidade calibrada);
 "region" é a caixa do assento em coordenadas normalizadas {x,y,w,h} (0–1) ou null.
-Responde apenas com JSON: {"seats":[{"recordType":{"value":"baptism|marriage|death|undetermined","confidence":0},
-"originalText":{...},"folio":{"value":null,"confidence":0},"placeAsWritten":{...},"dateAsWritten":{...},"marginalNotes":{...},
-"participants":[{"participant":{"role":"","nameAsWritten":"","legibility":"legible|uncertain|illegible","position":0},"confidence":0}],
-"region":null}]}`;
+Usa o schema de saída. Campos opcionais ausentes têm valor null. Ignora capas, folhas em branco, cotas e notas que não sejam assentos. Nesses casos devolve {"seats":[]}.`;
+
+const structuredOutput = z.toJSONSchema(modelOutputSchema);
+delete structuredOutput.$schema;
+function requireProperties(schema: object) {
+	Reflect.deleteProperty(schema, "default");
+	if ("properties" in schema && schema.properties && typeof schema.properties === "object") {
+		const required = new Set(
+			"required" in schema && Array.isArray(schema.required) ? schema.required : [],
+		);
+		for (const [key, value] of Object.entries(schema.properties)) {
+			if (!required.has(key))
+				Object.assign(schema.properties, { [key]: { anyOf: [value, { type: "null" }] } });
+		}
+		Object.assign(schema, { required: Object.keys(schema.properties) });
+	}
+	for (const value of Object.values(schema))
+		if (value && typeof value === "object") requireProperties(value);
+}
+requireProperties(structuredOutput);
 
 /** OpenRouter Chat Completions API provider; the key never leaves the server. */
 export function createOpenRouterProvider(options: {
@@ -115,66 +131,130 @@ export function createOpenRouterProvider(options: {
 	fetch?: typeof fetch;
 }): ModelProvider {
 	const doFetch = options.fetch ?? fetch;
+	async function extractImage(image: LoadedImage) {
+		let response: Response;
+		try {
+			response = await doFetch("https://openrouter.ai/api/v1/chat/completions", {
+				method: "POST",
+				signal: AbortSignal.timeout(options.timeoutMs),
+				headers: {
+					"content-type": "application/json",
+					authorization: `Bearer ${options.apiKey}`,
+				},
+				body: JSON.stringify({
+					model: options.model,
+					max_tokens: 8192,
+					provider: { require_parameters: true },
+					response_format: {
+						type: "json_schema",
+						json_schema: { name: "parish_records", strict: true, schema: structuredOutput },
+					},
+					messages: [
+						{ role: "system", content: systemPrompt },
+						{
+							role: "user",
+							content: [
+								{ type: "text", text: "Transcreve os assentos desta página." },
+								{
+									type: "image_url",
+									image_url: {
+										url: `data:${image.mediaType};base64,${Buffer.from(image.bytes).toString("base64")}`,
+									},
+								},
+							],
+						},
+					],
+				}),
+			});
+		} catch (error) {
+			throw new TransientExtractionError("model_request_failed", String(error));
+		}
+		if (!response.ok) {
+			const transient = response.status >= 500 || response.status === 429;
+			const make = transient ? TransientExtractionError : PermanentExtractionError;
+			throw new make("model_http_error", `Model API answered ${response.status}`);
+		}
+		let body: unknown;
+		try {
+			body = await response.json();
+		} catch {
+			throw new PermanentExtractionError("model_invalid_json", "Model response is not valid JSON");
+		}
+		const parsed = z
+			.object({
+				choices: z.array(
+					z.object({
+						finish_reason: z.string().nullable().optional(),
+						message: z.object({ content: z.string().nullable() }).optional(),
+					}),
+				),
+			})
+			.safeParse(body);
+		const choice = parsed.success ? parsed.data.choices[0] : undefined;
+		if (choice?.finish_reason === "length")
+			throw new PermanentExtractionError("model_truncated", "Model reached its output limit");
+		const text = choice?.message?.content;
+		if (!text) throw new PermanentExtractionError("model_empty", "Model returned no text");
+		try {
+			const payload: unknown = JSON.parse(
+				text.trim().replace(/^```(?:json)?\s*|\s*```$/g, ""),
+				(key, value) =>
+					value === null && ["normalizedName", "roleAsWritten", "notes"].includes(key)
+						? undefined
+						: value,
+			);
+			return payload;
+		} catch {
+			throw new PermanentExtractionError("model_invalid_json", "Model output is not valid JSON");
+		}
+	}
 	return {
 		model: "openrouter",
 		version: options.model,
 		promptVersion,
 		async extract(image) {
-			let response: Response;
 			try {
-				response = await doFetch("https://openrouter.ai/api/v1/chat/completions", {
-					method: "POST",
-					signal: AbortSignal.timeout(options.timeoutMs),
-					headers: {
-						"content-type": "application/json",
-						authorization: `Bearer ${options.apiKey}`,
-					},
-					body: JSON.stringify({
-						model: options.model,
-						max_tokens: 8192,
-						messages: [
-							{ role: "system", content: systemPrompt },
-							{
-								role: "user",
-								content: [
-									{ type: "text", text: "Transcreve os assentos desta página." },
-									{
-										type: "image_url",
-										image_url: {
-											url: `data:${image.mediaType};base64,${Buffer.from(image.bytes).toString("base64")}`,
-										},
-									},
-								],
-							},
-						],
-					}),
-				});
+				return await extractImage(image);
 			} catch (error) {
-				throw new TransientExtractionError("model_request_failed", String(error));
+				if (!(error instanceof PermanentExtractionError) || error.code !== "model_truncated")
+					throw error;
 			}
-			if (!response.ok) {
-				const transient = response.status >= 500 || response.status === 429;
-				const make = transient ? TransientExtractionError : PermanentExtractionError;
-				throw new make("model_http_error", `Model API answered ${response.status}`);
+			const original = sharp(Buffer.from(image.bytes), { limitInputPixels: 60_000_000 });
+			const { width, height } = await original.metadata();
+			if (width < 2 || height < 2)
+				throw new PermanentExtractionError("model_truncated", "Image cannot be split");
+			const horizontal = width >= height;
+			const half = Math.floor((horizontal ? width : height) / 2);
+			const seats: z.infer<typeof modelOutputSchema>["seats"] = [];
+			for (const start of [0, half]) {
+				const area = horizontal
+					? { left: start, top: 0, width: start ? width - half : half, height }
+					: { left: 0, top: start, width, height: start ? height - half : half };
+				const bytes = await original.clone().extract(area).jpeg({ quality: 92 }).toBuffer();
+				const part = modelOutputSchema.safeParse(
+					await extractImage({ ...image, bytes, mediaType: "image/jpeg" }),
+				);
+				if (!part.success)
+					throw new PermanentExtractionError(
+						"model_schema",
+						"Split response does not match the schema",
+					);
+				for (const seat of part.data.seats) {
+					const r = seat.region;
+					seats.push({
+						...seat,
+						region: r
+							? {
+									x: (area.left + r.x * area.width) / width,
+									y: (area.top + r.y * area.height) / height,
+									w: (r.w * area.width) / width,
+									h: (r.h * area.height) / height,
+								}
+							: null,
+					});
+				}
 			}
-			let body: unknown;
-			try {
-				body = await response.json();
-			} catch {
-				throw new PermanentExtractionError("model_output", "Model response is not valid JSON");
-			}
-			const parsed = z
-				.object({
-					choices: z.array(z.object({ message: z.object({ content: z.string().nullable() }) })),
-				})
-				.safeParse(body);
-			const text = parsed.success ? parsed.data.choices[0]?.message.content : null;
-			if (!text) throw new PermanentExtractionError("model_output", "Model returned no text");
-			try {
-				return JSON.parse(text.replace(/^```(?:json)?\s*|\s*```$/g, ""));
-			} catch {
-				throw new PermanentExtractionError("model_output", "Model output is not valid JSON");
-			}
+			return { seats };
 		},
 	};
 }

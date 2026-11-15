@@ -3,7 +3,9 @@ import {
 	decisionRequestSchema,
 	editRevisionRequestSchema,
 	proposalListSchema,
+	proposedSeatSchema,
 	rejectRequestSchema,
+	summarizeSeatConfidence,
 	validationStatusSchema,
 } from "@hdata/domain";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
@@ -57,7 +59,7 @@ export function registerReviewRoutes(app: FastifyInstance, options: ReviewRouteO
 				throw new EditorialFailure("forbidden", "Sem acesso às propostas");
 			const { q } = parse(z.object({ q: z.string().trim().max(120).default("") }), request.query);
 			const { rows } = await options.pool.query(
-				`SELECT p.id, b.reference_code AS book, i.sequence, p.confidence,
+				`SELECT p.id, b.reference_code AS book, i.sequence, p.confidence,p.content,
 			        p.content #>> '{originalText,value}' AS text,
 			        b.viewer_url AS viewer, i.external_id
 			 FROM extraction_proposal p
@@ -80,7 +82,19 @@ export function registerReviewRoutes(app: FastifyInstance, options: ReviewRouteO
 						return [];
 					url.searchParams.set("selectedFile", row.external_id);
 					url.searchParams.set("fileType", "IMAGE");
-					return [{ ...row, viewerUrl: url.href }];
+					const seat = proposedSeatSchema.parse(row.content);
+					return [
+						{
+							...row,
+							viewerUrl: url.href,
+							confidenceSummary: summarizeSeatConfidence(seat),
+							namesToConfirm: seat.participants.some(
+								({ participant }) =>
+									participant.legibility !== "legible" ||
+									participant.nameAsWritten.includes("[ilegível]"),
+							),
+						},
+					];
 				}),
 			});
 		}),

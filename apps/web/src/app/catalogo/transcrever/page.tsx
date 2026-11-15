@@ -35,7 +35,8 @@ async function submit(previous: BatchState, form: FormData): Promise<BatchState>
 				"Token inválido. Use o mesmo token de Atualizar catálogo, com pelo menos 16 caracteres e sem espaços.",
 		};
 
-	const enqueue = form.get("operation") === "enqueue";
+	const retryFailed = form.get("operation") === "retry";
+	const enqueue = retryFailed || form.get("operation") === "enqueue";
 	const authorize = enqueue && form.get("authorize") === "on";
 	const evidence = form.get("rightsEvidence");
 	if (
@@ -53,6 +54,7 @@ async function submit(previous: BatchState, form: FormData): Promise<BatchState>
 		first: form.get("first"),
 		limit: form.get("limit"),
 		enqueue,
+		retryFailed,
 		rightsEvidence: authorize ? evidence : undefined,
 	});
 	if (!input.success) {

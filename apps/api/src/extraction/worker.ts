@@ -36,11 +36,12 @@ export async function startExtractionWorker(options: {
 	});
 	return {
 		/** Creates (or finds) the run and queues it once; repeated calls never queue it twice. */
-		async enqueue(imageId: string) {
+		async enqueue(imageId: string, retryFailed = false) {
 			const run = await requestExtraction(options.pool, {
 				imageId,
 				provider: options.provider,
 				maxAttempts: options.maxAttempts,
+				retryFailed,
 			});
 			if (run.status === "queued")
 				await boss.send(extractionQueue, { runId: run.id }, { singletonKey: run.id });

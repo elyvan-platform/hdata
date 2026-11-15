@@ -1,9 +1,10 @@
 import { PGlite } from "@electric-sql/pglite";
 import type { ProposedSeat } from "@hdata/domain";
-import { extractionBatchSchema } from "@hdata/domain";
+import { extractionBatchSchema, modelOutputSchema, summarizeSeatConfidence } from "@hdata/domain";
 import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import type { Pool } from "pg";
+import sharp from "sharp";
 import { afterAll, beforeAll, expect, it } from "vitest";
 import { previewBatch, runExtractionBatch } from "./batch.ts";
 import { evaluatePilot } from "./evaluate.ts";
@@ -222,6 +223,10 @@ it("sends images to OpenRouter and validates its response", async () => {
 			expect(init?.headers).toMatchObject({ authorization: "Bearer secret" });
 			const request = JSON.parse(String(init?.body));
 			expect(request.model).toBe("google/gemini-2.5-flash");
+			expect(request.response_format).toMatchObject({
+				type: "json_schema",
+				json_schema: { strict: true },
+			});
 			expect(request.messages[1].content[1]).toEqual({
 				type: "image_url",
 				image_url: { url: "data:image/jpeg;base64,AQI=" },
@@ -237,7 +242,7 @@ it("sends images to OpenRouter and validates its response", async () => {
 		timeoutMs: 1000,
 		fetch: async () => Response.json({ choices: [] }),
 	});
-	await expect(invalid.extract(image)).rejects.toMatchObject({ code: "model_output" });
+	await expect(invalid.extract(image)).rejects.toMatchObject({ code: "model_empty" });
 });
 
 it("measures error rate against manually reviewed seats", () => {
@@ -485,4 +490,47 @@ it("prioritizes deaths and rejects image locators that do not match the catalog"
 	expect(blocked.pages[0]?.failure).toBe("image_locator_mismatch");
 	expect(blocked.reservedCalls).toBe(0);
 	expect(p.calls).toBe(1);
+});
+
+it("summarizes confidence across readable fields, including genuine zero values", () => {
+	const summary = summarizeSeatConfidence({
+		...seat("Joana", 0),
+		placeAsWritten: f("[ilegível]", 0.9),
+	});
+	expect(summary?.min).toBe(0);
+	expect(summary?.max).toBe(0.8);
+	expect(summary?.mean).toBeCloseTo(0.8 / 3);
+});
+
+it("retries a truncated wide image in two crops and maps both regions to the original", async () => {
+	const bytes = await sharp({
+		create: { width: 12, height: 6, channels: 3, background: "white" },
+	})
+		.png()
+		.toBuffer();
+	const responses = [
+		{ finish_reason: "length", message: { content: "{" } },
+		...["Esquerda", "Direita"].map((name) => ({
+			finish_reason: "stop",
+			message: {
+				content: JSON.stringify({ seats: [{ ...seat(name), region: { x: 0, y: 0, w: 1, h: 1 } }] }),
+			},
+		})),
+	];
+	const model = createOpenRouterProvider({
+		apiKey: "secret",
+		model: "m",
+		timeoutMs: 1000,
+		fetch: async () => Response.json({ choices: [responses.shift()] }),
+	});
+	const result = modelOutputSchema.parse(
+		await model.extract({ bytes, mediaType: "image/png", sha256: "a" }),
+	);
+	expect(
+		result.seats.map((item) => [item.originalText.value, item.region?.x, item.region?.w]),
+	).toEqual([
+		["Esquerda", 0, 0.5],
+		["Direita", 0.5, 0.5],
+	]);
+	expect(responses).toHaveLength(0);
 });
