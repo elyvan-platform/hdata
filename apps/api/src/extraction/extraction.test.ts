@@ -154,7 +154,14 @@ it("fails permanently on malformed model output without writing proposals", asyn
 });
 
 it("turns a proposal into a draft revision only when a human accepts it", async () => {
-	const p = provider(async () => ({ seats: [seat("Aos doze")] }), "review");
+	const proposalSeat = seat("Aos doze", 0);
+	const [child] = proposalSeat.participants;
+	if (!child) throw new Error("Missing test participant");
+	proposalSeat.participants.push({
+		participant: { ...child.participant, role: "mother", nameAsWritten: "Maria" },
+		confidence: 0,
+	});
+	const p = provider(async () => ({ seats: [proposalSeat] }), "review");
 	const run = await requestExtraction(pool, { imageId, provider: p });
 	await processExtraction(pool, run.id, { provider: p, loadImage });
 	expect((await db.query("SELECT 1 FROM archive_record")).rows).toHaveLength(0);
@@ -178,6 +185,14 @@ it("turns a proposal into a draft revision only when a human accepts it", async 
 		[revisionId],
 	);
 	expect(rev.rows[0]).toEqual({ status: "draft", original_text: "Aos doze" });
+	const participants = await db.query(
+		"SELECT name_as_written, position FROM participant WHERE revision_id=$1 ORDER BY position",
+		[revisionId],
+	);
+	expect(participants.rows).toEqual([
+		{ name_as_written: "Joana", position: 0 },
+		{ name_as_written: "Maria", position: 1 },
+	]);
 	await expect(
 		reviewProposal(pool, {
 			proposalId: proposal,

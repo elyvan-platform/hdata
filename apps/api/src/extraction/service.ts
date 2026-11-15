@@ -284,7 +284,11 @@ export async function reviewProposal(
 				placeAsWritten: seat.placeAsWritten.value ?? undefined,
 				originalText: seat.originalText.value,
 				marginalNotes: seat.marginalNotes.value ?? undefined,
-				participants: seat.participants.map((p) => p.participant),
+				// Model proposals can repeat positions. Preserve their order and assign unique positions.
+				participants: seat.participants
+					.map(({ participant }) => participant)
+					.sort((a, b) => a.position - b.position)
+					.map((participant, position) => ({ ...participant, position })),
 				images: [{ imageId: row.image_id, ...(seat.region && { region: seat.region }) }],
 				provenance: {
 					sourceId: row.source_id,
