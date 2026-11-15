@@ -52,6 +52,32 @@ export function seatConfidence(seat: ProposedSeat): number {
 	return Math.min(...seatFieldConfidences(seat));
 }
 
+export function summarizeSeatConfidence(seat: ProposedSeat) {
+	const fields = [
+		{ field: "Tipo de assento", ...seat.recordType },
+		{ field: "Texto", ...seat.originalText },
+		{ field: "Fólio", ...seat.folio },
+		{ field: "Lugar", ...seat.placeAsWritten },
+		{ field: "Data", ...seat.dateAsWritten },
+		{ field: "Notas marginais", ...seat.marginalNotes },
+		...seat.participants.map(({ participant, confidence }) => ({
+			field: `Nome (${participant.role})`,
+			value: participant.nameAsWritten,
+			confidence,
+		})),
+	].filter(({ value }) => value?.trim() && value.trim() !== illegibleMarker);
+	const sorted = fields.sort((a, b) => a.confidence - b.confidence);
+	const low = sorted[0];
+	const high = sorted.at(-1);
+	if (!low || !high) return undefined;
+	return {
+		min: low.confidence,
+		minField: low.field,
+		max: high.confidence,
+		mean: sorted.reduce((sum, entry) => sum + entry.confidence, 0) / sorted.length,
+	};
+}
+
 export function hasIllegible(seat: ProposedSeat): boolean {
 	return (
 		seat.originalText.value.includes(illegibleMarker) ||
@@ -72,6 +98,15 @@ export const proposalListSchema = z.object({
 			sequence: z.number().int().positive(),
 			confidence: z.number().min(0).max(1),
 			text: z.string(),
+			confidenceSummary: z
+				.object({
+					min: confidenceSchema,
+					minField: z.string(),
+					max: confidenceSchema,
+					mean: confidenceSchema,
+				})
+				.optional(),
+			namesToConfirm: z.boolean().optional(),
 		}),
 	),
 });
@@ -81,6 +116,7 @@ export const bookExtractionRequestSchema = z.object({
 	first: z.coerce.number().int().min(1).max(100_000),
 	limit: z.coerce.number().int().min(1).max(20),
 	enqueue: z.boolean(),
+	retryFailed: z.boolean().optional(),
 	rightsEvidence: z.string().trim().min(12).max(1000).optional(),
 });
 export const bookExtractionStatusSchema = z.object({
@@ -91,6 +127,7 @@ export const bookExtractionStatusSchema = z.object({
 			viewerUrl: z.url(),
 			status: z.enum(["not_queued", "queued", "running", "succeeded", "failed"]),
 			error: z.string().nullable(),
+			proposalCount: z.number().int().nonnegative().optional(),
 		}),
 	),
 });

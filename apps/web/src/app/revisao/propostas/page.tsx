@@ -57,7 +57,18 @@ export default async function ProposalsPage({
 							<h2>
 								{item.book} · Imagem {item.sequence}
 							</h2>
-							<p>Confiança estimada: {Math.round(item.confidence * 100)}%</p>
+							{item.confidenceSummary ? (
+								<p>
+									Confiança estimada ·{" "}
+									<strong>Média {Math.round(item.confidenceSummary.mean * 100)}%</strong>
+									{" · "}Mínima {Math.round(item.confidenceSummary.min * 100)}% (
+									{item.confidenceSummary.minField}){" · "}Máxima{" "}
+									{Math.round(item.confidenceSummary.max * 100)}%
+								</p>
+							) : (
+								<p>Resumo da confiança indisponível.</p>
+							)}
+							{item.namesToConfirm && <p>Nomes por confirmar</p>}
 							<p>{item.text}</p>
 							<p>
 								<a href={item.viewerUrl}>Abrir imagem no Digitarq</a>

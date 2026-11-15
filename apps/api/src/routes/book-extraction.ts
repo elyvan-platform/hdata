@@ -21,7 +21,7 @@ export function registerBookExtractionRoutes(
 			return reply.code(401).send({ error: "unauthorized" });
 		const parsed = bookExtractionRequestSchema.safeParse(request.body);
 		if (!parsed.success) return reply.code(400).send({ error: "invalid_range" });
-		const { book, first, limit, enqueue, rightsEvidence } = parsed.data;
+		const { book, first, limit, enqueue, retryFailed, rightsEvidence } = parsed.data;
 		const found = await options.pool.query<{
 			id: string;
 			source_id: string;
@@ -50,6 +50,22 @@ export function registerBookExtractionRoutes(
 			request.log.error({ err: error }, "Digitarq page discovery failed");
 			return reply.code(502).send({ error: "digitarq_unavailable" });
 		}
+		async function loadRuns() {
+			const runs = await options.pool.query<{
+				external_id: string;
+				status: string;
+				error_code: string | null;
+				proposal_count: number;
+			}>(
+				`SELECT DISTINCT ON (i.external_id) i.external_id,r.status,r.error_code,
+			 (SELECT count(*)::int FROM extraction_proposal p WHERE p.run_id=r.id) AS proposal_count
+			 FROM image_ref i JOIN extraction_run r ON r.image_id=i.id
+			 WHERE i.book_id=$1 AND i.external_id=ANY($2::text[])
+			 ORDER BY i.external_id,r.created_at DESC,r.id DESC`,
+				[volume?.id, discovered.pages.map((page) => page.externalId)],
+			);
+			return new Map(runs.rows.map((run) => [run.external_id, run]));
+		}
 		if (enqueue && worker) {
 			if (discovered.pages.length && volume.rights_status === "unknown" && rightsEvidence) {
 				const decision = await options.pool.query(
@@ -60,23 +76,14 @@ export function registerBookExtractionRoutes(
 				);
 				if (!decision.rowCount) return reply.code(409).send({ error: "rights_unknown" });
 			}
+			const prior = retryFailed ? await loadRuns() : undefined;
 			for (const page of discovered.pages) {
+				if (prior && prior.get(page.externalId)?.status !== "failed") continue;
 				const imageId = await registerBookPage(options.pool, volume, page);
-				await worker.enqueue(imageId);
+				await worker.enqueue(imageId, retryFailed);
 			}
 		}
-		const runs = await options.pool.query<{
-			external_id: string;
-			status: string;
-			error_code: string | null;
-		}>(
-			`SELECT DISTINCT ON (i.external_id) i.external_id,r.status,r.error_code
-			 FROM image_ref i JOIN extraction_run r ON r.image_id=i.id
-			 WHERE i.book_id=$1 AND i.external_id=ANY($2::text[])
-			 ORDER BY i.external_id,r.created_at DESC,r.id DESC`,
-			[volume.id, discovered.pages.map((page) => page.externalId)],
-		);
-		const byPage = new Map(runs.rows.map((run) => [run.external_id, run]));
+		const byPage = await loadRuns();
 		return bookExtractionStatusSchema.parse({
 			total: discovered.total,
 			pages: discovered.pages.map((page) => {
@@ -86,6 +93,7 @@ export function registerBookExtractionRoutes(
 					viewerUrl: page.viewerUrl,
 					status: run?.status ?? "not_queued",
 					error: run?.error_code ?? null,
+					proposalCount: run?.proposal_count,
 				};
 			}),
 		});

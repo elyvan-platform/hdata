@@ -130,3 +130,12 @@ registar, o formulário permite documentá-la mediante confirmação expressa e
 referência da autorização. Essa decisão abrange a fonte inteira: não a registe
 a partir de evidência específica de um só livro ou imagem. A revisão e publicação
 dos assentos continuam na área editorial.
+
+Depois de consultar o progresso, use **Repetir falhadas** para voltar a colocar
+na fila apenas as páginas com erro no intervalo. Uma página processada sem
+assentos fica identificada no progresso. Se a resposta do modelo for cortada,
+o worker tenta as duas metades da imagem antes de sinalizar a falha.
+
+Em **Transcrições automáticas**, cada proposta apresenta a confiança estimada
+média, mínima e máxima dos campos legíveis preenchidos. Os nomes marcados
+como incertos são assinalados para confirmação editorial.

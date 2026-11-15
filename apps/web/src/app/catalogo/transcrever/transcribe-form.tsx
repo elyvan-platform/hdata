@@ -9,6 +9,13 @@ export type BatchState = {
 	book?: string;
 	result?: z.infer<typeof bookExtractionStatusSchema>;
 };
+const failureLabels: Record<string, string> = {
+	model_output: "Resposta antiga inválida; detalhe indisponível",
+	model_empty: "O modelo não devolveu texto",
+	model_invalid_json: "O modelo devolveu JSON inválido",
+	model_schema: "A resposta não cumpriu o formato esperado",
+	model_truncated: "O modelo atingiu o limite de saída",
+};
 const labels = {
 	not_queued: "Por iniciar",
 	queued: "Em fila",
@@ -101,6 +108,9 @@ export function TranscribeForm({
 					<button type="submit" name="operation" value="enqueue">
 						Iniciar transcrição
 					</button>
+					<button type="submit" name="operation" value="retry">
+						Reprocessar páginas falhadas
+					</button>
 				</fieldset>
 			</form>
 			<p role="status">{pending ? "A consultar…" : state.message}</p>
@@ -116,7 +126,8 @@ export function TranscribeForm({
 						{state.result.pages.map((page) => (
 							<li key={page.page}>
 								<a href={page.viewerUrl}>Página {page.page}</a> · {labels[page.status]}
-								{page.error && ` (${page.error})`}
+								{page.status === "succeeded" && page.proposalCount === 0 && " — sem assentos"}
+								{page.error && ` (${failureLabels[page.error] ?? page.error})`}
 							</li>
 						))}
 					</ul>
